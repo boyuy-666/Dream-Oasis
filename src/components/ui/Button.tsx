@@ -1,49 +1,67 @@
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 
-import { colors, gradients, radius, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 import { AppText } from './AppText';
 
 interface Props {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'ghost';
+  /** `primary` = Moonlight Blue fill; `secondary` = navy surface with silver border. */
+  variant?: 'primary' | 'secondary';
   disabled?: boolean;
   loading?: boolean;
+  accessibilityHint?: string;
 }
 
-export function Button({ label, onPress, variant = 'primary', disabled, loading }: Props) {
+export function Button({ label, onPress, variant = 'primary', disabled, loading, accessibilityHint }: Props) {
+  const isPrimary = variant === 'primary';
+  const inactive = disabled || loading;
+
   const handle = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     onPress();
   };
-  const isPrimary = variant === 'primary';
+
+  const textColor = disabled ? colors.disabledText : isPrimary ? colors.onAccent : colors.text;
+
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: !!disabled }}
-      disabled={disabled || loading}
+      accessibilityLabel={label}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: !!inactive, busy: !!loading }}
+      disabled={inactive}
       onPress={handle}
-      style={({ pressed }) => [styles.wrap, { opacity: disabled ? 0.45 : pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+      style={({ pressed }) => [
+        styles.base,
+        disabled ? styles.disabled : isPrimary ? styles.primary : styles.secondary,
+        pressed && !inactive && { opacity: 0.88, transform: [{ scale: 0.985 }] },
+      ]}
     >
-      {isPrimary ? (
-        <LinearGradient colors={gradients.gold} style={styles.inner} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          {loading ? <ActivityIndicator color={colors.midnight} /> : <AppText variant="body" color={colors.midnight} style={styles.label}>{label}</AppText>}
-        </LinearGradient>
+      {loading ? (
+        <ActivityIndicator color={textColor} />
       ) : (
-        <View style={[styles.inner, styles.ghost]}>
-          <AppText variant="body" color={colors.lavenderSoft} style={styles.label}>{label}</AppText>
-        </View>
+        <AppText variant="body" color={textColor} style={styles.label}>
+          {label}
+        </AppText>
       )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { borderRadius: radius.pill, overflow: 'hidden' },
-  inner: { paddingVertical: 15, paddingHorizontal: spacing.lg, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
-  ghost: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.glass },
-  label: { fontWeight: '600', letterSpacing: 0.4 },
+  base: {
+    minHeight: 52,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  primary: { backgroundColor: colors.accent, borderColor: colors.accent },
+  secondary: { backgroundColor: colors.surfaceGlass, borderColor: colors.border },
+  disabled: { backgroundColor: colors.disabledBg, borderColor: colors.border },
+  label: { fontWeight: '600', letterSpacing: 0.3 },
 });

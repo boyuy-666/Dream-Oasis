@@ -3,17 +3,26 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { colors, radius, spacing } from '@/theme';
 
-export function GlassCard({ children, style, gold }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; gold?: boolean }) {
-  return <View style={[styles.card, gold && { borderColor: colors.borderGold }, style]}>{children}</View>;
+interface Props {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+  /** Emphasised surface with a moonlight-blue border (e.g. primary CTA card). */
+  accent?: boolean;
+}
+
+/** Elevated navy surface used for content panels. */
+export function GlassCard({ children, style, accent }: Props) {
+  return <View style={[styles.card, accent && styles.accent, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.glass,
-    borderWidth: 1,
+    backgroundColor: colors.surfaceGlass,
+    borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: colors.border,
     borderRadius: radius.lg,
-    padding: spacing.md,
+    padding: spacing.lg,
     gap: spacing.sm,
   },
+  accent: { backgroundColor: colors.surface, borderColor: colors.accentBorder },
 });

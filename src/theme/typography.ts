@@ -9,10 +9,10 @@ export const fonts = {
 export const type = {
   hero: { fontFamily: fonts.display, fontSize: 40, lineHeight: 46, letterSpacing: 0.3 },
   title: { fontFamily: fonts.display, fontSize: 30, lineHeight: 36 },
-  heading: { fontFamily: fonts.display, fontSize: 22, lineHeight: 28 },
-  quote: { fontFamily: fonts.displayItalic, fontSize: 18, lineHeight: 26 },
+  heading: { fontFamily: fonts.display, fontSize: 24, lineHeight: 30 },
+  quote: { fontFamily: fonts.displayItalic, fontSize: 19, lineHeight: 27 },
   body: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24 },
-  caption: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, letterSpacing: 0.4 },
+  caption: { fontFamily: fonts.body, fontSize: 14, lineHeight: 19, letterSpacing: 0.2 },
   label: {
     fontFamily: fonts.body,
     fontSize: 12,

@@ -24,7 +24,7 @@ function Shell() {
 
   if (!done) return null;
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.midnight } }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="reveal/[id]" options={{ animation: 'fade', presentation: 'fullScreenModal', gestureEnabled: false }} />
     </Stack>

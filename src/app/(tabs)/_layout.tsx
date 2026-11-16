@@ -1,12 +1,19 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { colors } from '@/theme';
+import { colors, radius } from '@/theme';
 
-const icon = (glyph: string) =>
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const icon = (active: IconName, inactive: IconName) =>
   function TabIcon({ focused }: { focused: boolean }) {
-    return <Text style={[styles.icon, { opacity: focused ? 1 : 0.45 }]}>{glyph}</Text>;
+    return (
+      <View style={[styles.pill, focused && styles.pillActive]}>
+        <Ionicons name={focused ? active : inactive} size={21} color={focused ? colors.text : colors.textMuted} />
+      </View>
+    );
   };
 
 export default function TabsLayout() {
@@ -14,19 +21,23 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.gold,
-        tabBarInactiveTintColor: colors.textDim,
-        tabBarStyle: { backgroundColor: 'rgba(11,7,32,0.96)', borderTopColor: colors.border },
-        tabBarLabelStyle: { fontSize: 11, letterSpacing: 0.4 },
-        sceneStyle: { backgroundColor: colors.midnight },
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '500', letterSpacing: 0.3 },
+        tabBarItemStyle: { paddingTop: 4 },
+        sceneStyle: { backgroundColor: colors.bg },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: icon('🌙') }} />
-      <Tabs.Screen name="record" options={{ title: 'Record', tabBarIcon: icon('✍️') }} />
-      <Tabs.Screen name="collection" options={{ title: 'Collection', tabBarIcon: icon('🃏') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('👤') }} />
+      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: icon('moon', 'moon-outline') }} />
+      <Tabs.Screen name="record" options={{ title: 'Record', tabBarIcon: icon('create', 'create-outline') }} />
+      <Tabs.Screen name="collection" options={{ title: 'Collection', tabBarIcon: icon('albums', 'albums-outline') }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: icon('person-circle', 'person-circle-outline') }} />
     </Tabs>
   );
 }
 
-const styles = StyleSheet.create({ icon: { fontSize: 20 } });
+const styles = StyleSheet.create({
+  pill: { width: 52, height: 30, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  pillActive: { backgroundColor: colors.accentSoft },
+});
