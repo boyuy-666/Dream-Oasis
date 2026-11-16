@@ -5,3 +5,4 @@ export * from './DreamCardView';
 export * from './GlassCard';
 export * from './Screen';
 export * from './StarField';
+export * from './StatTile';
