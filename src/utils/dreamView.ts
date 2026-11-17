@@ -34,6 +34,8 @@ const RULES: [RegExp, Motif][] = [
 ];
 
 export function motifFor(d: Dream): Motif {
+  // Edited dreams keep the motif they showed before their first edit.
+  if (d.motif && (MOTIFS as string[]).includes(d.motif)) return d.motif as Motif;
   const hay = `${d.title ?? ''} ${d.text} ${d.card.symbols.join(' ')}`.toLowerCase();
   const hit = RULES.find(([re]) => re.test(hay));
   // Unmatched dreams still get varied art, chosen stably from the dream id.

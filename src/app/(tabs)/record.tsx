@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Swit
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Button, Chip, Icon, Segmented, TextField } from '@/components/ui';
+import { MIN_DREAM_LENGTH, SUGGESTED_TAGS } from '@/data/dreamForm';
 import { MOODS } from '@/data/moods';
 import { DreamDetails, Mood } from '@/data/types';
 import { useDreams } from '@/store/DreamsContext';
@@ -12,8 +13,7 @@ import { colors, fonts, gradients, radius, spacing } from '@/theme';
 import { fmtShort } from '@/utils/dates';
 
 type Mode = 'quick' | 'detailed';
-const MIN_LENGTH = 3; // existing validation rule
-const SUGGESTED_TAGS = ['Water', 'Stairs', 'Door', 'Garden', 'Flying', 'Family', 'House', 'Animals', 'Light', 'Falling'];
+const MIN_LENGTH = MIN_DREAM_LENGTH;
 const SAMPLE = {
   title: 'The Library Under the Lake',
   text: 'I swam down into a quiet lake and found a library on the bottom. The books were dry, and one of them was open to a page about me, glowing softly in the dark water.',

@@ -47,9 +47,15 @@ export default function CardDetailScreen() {
       <View style={styles.grabber} />
       <View style={styles.bar}>
         <AppText variant="label" color={colors.textSecondary}>Nº {padNo(dream.no)} · {capitalize(dream.rarity)}</AppText>
-        <Pressable onPress={() => router.back()} style={styles.close} accessibilityRole="button" accessibilityLabel="Close" hitSlop={6}>
-          <Icon name="close" size={20} color={colors.text} />
-        </Pressable>
+        <View style={styles.barActions}>
+          <Pressable onPress={() => router.push(`/edit/${dream.id}`)} style={styles.edit} accessibilityRole="button" accessibilityLabel="Edit dream" hitSlop={6}>
+            <Icon name="pen" size={16} color={colors.text} />
+            <AppText variant="small" style={{ fontFamily: fonts.bodySemibold }}>Edit</AppText>
+          </Pressable>
+          <Pressable onPress={() => router.back()} style={styles.close} accessibilityRole="button" accessibilityLabel="Close" hitSlop={6}>
+            <Icon name="close" size={20} color={colors.text} />
+          </Pressable>
+        </View>
       </View>
       <ScrollView contentContainerStyle={[styles.body, { paddingBottom: insets.bottom + spacing.xl }]} showsVerticalScrollIndicator={false}>
         <View style={styles.cardWrap}>
@@ -99,6 +105,8 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
   grabber: { alignSelf: 'center', width: 38, height: 5, borderRadius: 3, backgroundColor: colors.fernStrong, marginTop: 8 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: spacing.lg, paddingRight: spacing.md, paddingTop: 8, paddingBottom: 4 },
+  barActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  edit: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: colors.paperA06, borderWidth: 1, borderColor: colors.border },
   close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.paperA06, borderWidth: 1, borderColor: colors.border },
   body: { paddingHorizontal: spacing.lg, paddingTop: 8, gap: 22 },
   cardWrap: { alignItems: 'center', marginTop: 6 },

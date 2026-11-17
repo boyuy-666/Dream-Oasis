@@ -37,6 +37,8 @@ function Shell() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="reveal/[id]" options={{ animation: 'fade', presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="card/[id]" options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.surface } }} />
+      {/* Full-screen so unsaved edits are only left through guarded exits (Cancel / back). */}
+      <Stack.Screen name="edit/[id]" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
     </Stack>
   );
 }
