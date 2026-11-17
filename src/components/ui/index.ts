@@ -7,4 +7,6 @@ export * from './DreamRow';
 export * from './GlassCard';
 export * from './Icon';
 export * from './Screen';
+export * from './Segmented';
 export * from './StatTile';
+export * from './TextField';
