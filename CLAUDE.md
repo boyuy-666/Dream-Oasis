@@ -24,41 +24,44 @@ Run `typecheck` and `lint` before declaring any task done.
 ## Layout
 ```
 src/app/            Expo Router routes only
-  _layout.tsx         root: fonts, splash, DreamsProvider, Stack
-  (tabs)/             Home, Record, Collection, Profile
-  reveal/[id].tsx     Dream Card Reveal (full-screen flip animation)
-src/components/ui/  Reusable UI (Screen, StarField, AppText, Button, Chip, GlassCard, StatTile, DreamCardView)
-src/theme/          colors, typography, spacing tokens
-src/data/           types, moods, sample dreams
-src/store/          DreamsContext (AsyncStorage persistence)
-src/utils/          generateCard (offline placeholder generator), stats
-src/hooks/          custom hooks (empty for now)
+  _layout.tsx         root: Instrument fonts, splash, DreamsProvider, Stack
+  (tabs)/             Garden (index), Record, Collection, Profile (via Home avatar)
+  reveal/[id].tsx     Card reveal (full-screen; float → charge → 3D flip → burst)
+  card/[id].tsx       Card detail (iOS modal sheet)
+src/art/botanical.ts  Night Garden SVG engine: 10 motifs, card back, ornaments, decor
+src/components/ui/    AppText, Art, Button, Chip, DreamRow, GlassCard, Icon, Screen, Segmented, StatTile, TextField
+src/components/card/  DreamCard (size-aware, rarity treatments), CardBack, CardFlip
+src/components/navigation/TabBar.tsx  custom tab bar (hidden on Record)
+src/theme/            colors, typography, spacing tokens
+src/data/             types, moods, sample dreams
+src/store/            DreamsContext (AsyncStorage key `dream-oasis:dreams:v1` — never change)
+src/utils/            generateCard (rarity/content logic), dreamView (derived card view model), stats, dates
+Dream-Oasis-UI-Prototype/  (only on branch prototype/night-garden-ui) approved HTML reference
 ```
 Import with the `@/` alias (maps to `src/`).
 
-## Design system — Midnight Blue & Moonlight Silver (approved Phase 1.5)
-Calm, elegant, minimal nighttime sanctuary — not astrology/fantasy-game styling. **No purple or gold anywhere** (buttons, stars, rarity, accents).
+## Data rules
+- Stored dreams are never rewritten. Card display fields (motif, card number, element/emotion labels) are derived in `utils/dreamView.ts`.
+- New optional fields (`title`, `details`) are additive; keep older records valid.
+- `generateCard` owns rarity and generated content — UI work must not change it.
+
+## Design system — Night Garden (approved)
+Nocturnal botanical sanctuary: moss-black calm, moth-paper type, rare bioluminescent glow, night-bloom flowers. No celestial/astrology clichés, no neon overload.
 
 | Token (`colors.*`) | Hex | Use |
 |---|---|---|
-| `bg` | `#10283F` | Primary background |
-| `bgDeep` | `#071521` | Deep night background, splash |
-| `surface` | `#19374C` | Elevated surface, inputs |
-| `surfaceAlt` | `#24485D` | Secondary surface, disabled bg |
-| `accent` | `#85B7CE` | Moonlight Blue — primary buttons, links, focus |
-| `onAccent` | `#10283F` | Text on accent |
-| `text` | `#EDF2F2` | Moonlight silver, primary text |
-| `textSecondary` | `#B1C6D3` | Secondary text |
-| `border` | `#345266` | Silver borders |
-| `highlight` | `#D9E9F0` | Soft moonlight highlight |
-| `textMuted` | `#6E899A` | Disabled / muted, inactive tabs |
-| `placeholder` | `#8EA6B5` | Input placeholders (≥4.5:1 on surface) |
+| `mossNight` / `bg` | `#0F1613` | Background |
+| `greenhouse` / `surface` | `#18221E` | Surfaces, sheets |
+| `mothPaper` / `text` | `#ECE7DA` | Primary text, selected chips |
+| `glow` / `accent` | `#C9E86B` | Primary action, focus, legendary — use sparingly |
+| `nightBloom` | `#E8A0AE` | Flowers, epic rarity, name accent |
+| `lichen` / `textSecondary` | `#A9B3A7` | Secondary text |
+| `fern` / `border` | `#2F3E36` | Lines and borders |
 
-Background gradient `#071521 → #10283F → #173B50` (`gradients.background`).
-Rarity (`colors.rarity`): common `#A9BEC9`, rare `#85B7CE`, epic `#6DD2DF`, legendary `#EDF2F2`.
-Buttons: primary = accent fill + `onAccent` text; secondary = navy glass + silver border; disabled = `surfaceAlt` + `textSecondary`.
-
-Rules: use semantic tokens from `@/theme` only — no raw hex/rgba outside `src/theme/`. Build screens with `<Screen>` (gradient + restrained silver stars + safe area; `moon` prop for a faint halo). Restrained elevation (`elevation.card`), no neon glows. Headings: Cormorant Garamond; body: system font. Icons: Ionicons from `@expo/vector-icons` (tintable). Animations use RN `Animated` with `useNativeDriver: true`. Keep text contrast ≥ 4.5:1.
+Derived: `surfaceSunk #131B17` (inputs), `surfaceRaised #1D2924`, `borderStrong #3C5045`, `textMuted #7E8A80` (5.1:1), `onAccent #14200F`, `danger #F2A7A0`.
+Type: display **Instrument Serif** (`fonts.display`, `fonts.displayItalic`), body **Instrument Sans** (`fonts.body*`). Use `type.*` variants via `<AppText variant>`.
+Rarity is shown by frame + finish, not only colour: common hairline; rare double rule + leaf sprigs; epic night-bloom vines + pearl sheen; legendary gradient frame, full vines, moving foil.
+Rules: semantic tokens only (raw hex allowed only inside `src/theme` and the art engine). Glows are radial gradients, not blur filters. Animations use RN `Animated` with `useNativeDriver: true` and respect Reduce Motion. Keep text contrast ≥ 4.5:1.
 
 ## Lint notes
-React Compiler lint rules are on: don't read/write refs during render (hold `Animated.Value` in `useState(() => ...)`) and keep render pure.
+React Compiler lint rules are on: don't read/write refs during render (hold `Animated.Value` in `useState(() => ...)`) and keep render pure. RN 0.88: no `StyleSheet.absoluteFillObject`; type host refs with `HostInstance`. Custom tab bars receive `emitter` + `navigateToTab` (no `navigation`).

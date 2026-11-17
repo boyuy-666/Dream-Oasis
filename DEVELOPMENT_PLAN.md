@@ -15,6 +15,13 @@
 - Cool-toned rarity colors; redesigned Dream Card, card back, tabs (Ionicons), Home stats + recent dreams
 - Visual-only: storage keys, dream records and card generation unchanged
 
+## Night Garden native implementation ✅ (branch feature/night-garden-native)
+- Approved direction B rebuilt natively from the HTML prototype (no WebView)
+- Tokens, Instrument fonts, botanical SVG engine (react-native-svg), custom tab bar
+- Home, Quick/Detailed Record, Dream Card system + reveal, Collection + detail sheet
+- Existing storage key, dream data, generateCard and rarity logic preserved
+- Next: real device QA in Expo Go, card share image, date picker for past dreams
+
 ## Phase 2 — Core journaling
 - Dream detail/edit/delete; search and filter by mood/rarity/date
 - Voice-to-text capture (free, on-device where possible)

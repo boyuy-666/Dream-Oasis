@@ -33,9 +33,6 @@ export const colors = {
   surface: palette.greenhouse,
   surfaceRaised: palette.greenhouseRaised,
   surfaceSunk: palette.greenhouseSunk,
-  surfaceAlt: palette.greenhouseRaised,
-  surfaceGlass: palette.greenhouse,
-  tabBar: palette.mossNight,
 
   // Text
   text: palette.mothPaper,
@@ -46,17 +43,12 @@ export const colors = {
   // Accent — glow is reserved for the primary action, focus and legendary cards
   accent: palette.glow,
   onAccent: palette.glowInk,
-  accentSoft: 'rgba(201,232,107,0.16)',
-  accentBorder: 'rgba(201,232,107,0.45)',
-  highlight: palette.mothPaper,
 
   // Lines & states
   border: palette.fern,
   borderStrong: palette.fernStrong,
   disabledBg: palette.greenhouseRaised,
   disabledText: palette.lichen,
-  star: palette.mothPaper,
-  starBright: palette.glowPale,
 
   // Translucent helpers
   paperA06: 'rgba(236,231,218,0.06)',
@@ -79,9 +71,6 @@ export const colors = {
 } as const;
 
 export const gradients = {
-  background: [palette.mossNight, palette.mossNight, '#111A16'] as const,
-  card: [palette.greenhouse, palette.greenhouse, palette.greenhouse] as const,
-  cardBack: [palette.mossNight, palette.mossNight, palette.mossNight] as const,
   sheen: ['rgba(255,220,228,0)', 'rgba(255,220,228,0.10)', 'rgba(255,220,228,0)'] as const,
   artFade: ['rgba(24,34,30,0)', 'rgba(24,34,30,0.92)'] as const,
   saveBar: ['rgba(15,22,19,0)', palette.mossNight] as const,

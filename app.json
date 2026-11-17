@@ -7,11 +7,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#071521",
+    "backgroundColor": "#0F1613",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#071521"
+      "backgroundColor": "#0F1613"
     },
     "ios": {
       "supportsTablet": false,
@@ -20,7 +20,7 @@
     "android": {
       "package": "com.dreamoasis.app",
       "adaptiveIcon": {
-        "backgroundColor": "#071521",
+        "backgroundColor": "#0F1613",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
