@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   column: { gap: 14 },
   header: { gap: 22, marginBottom: 4 },
   headRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  count: { fontFamily: fonts.display, fontSize: 64, lineHeight: 60, color: colors.text, fontVariant: ['tabular-nums'] },
+  count: { fontFamily: fonts.display, fontSize: 48, lineHeight: 52, color: colors.text, fontVariant: ['tabular-nums'] },
   bar: { flexDirection: 'row', height: 6, borderRadius: 3, overflow: 'hidden', gap: 2 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 6 },
   filterScroll: { marginHorizontal: -spacing.lg },
