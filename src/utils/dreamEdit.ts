@@ -1,6 +1,7 @@
 import { Dream, DreamDetails, DreamEdit } from '@/data/types';
 import { isFutureKey, isValidDateKey } from '@/utils/dreamDates';
 import { motifFor } from '@/utils/dreamView';
+import { assertValidMoods } from '@/utils/moodSelection';
 
 const EDITABLE_DETAILS: (keyof DreamDetails)[] = ['people', 'place', 'tags', 'vividness', 'lucid'];
 
@@ -11,7 +12,13 @@ const isEmpty = (v: unknown) => v === undefined || v === null || v === '' || (Ar
  * Pure: returns a new record and never calls generateCard / rollRarity.
  */
 export function applyDreamEdit(prev: Dream, edit: DreamEdit): Dream {
-  const next: Dream = { ...prev, text: edit.text.trim(), mood: edit.mood };
+  const next: Dream = { ...prev, text: edit.text.trim() };
+  // Emotions change only when the edit carries them; legacy records otherwise keep their shape.
+  if (edit.moods !== undefined) {
+    assertValidMoods(edit.moods);
+    next.moods = [...edit.moods];
+    next.mood = edit.moods[0];
+  }
   // Identity and the generated card are immutable.
   next.id = prev.id;
   next.createdAt = prev.createdAt;

@@ -4,13 +4,14 @@ import React, { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, Chip, DreamDatePicker, Icon, Segmented, TextField } from '@/components/ui';
+import { AppText, Button, Chip, DreamDatePicker, Icon, MoodSelector, Segmented, TextField } from '@/components/ui';
 import { MIN_DREAM_LENGTH, SUGGESTED_TAGS } from '@/data/dreamForm';
-import { MOODS } from '@/data/moods';
+import { DEFAULT_MOODS } from '@/data/moods';
 import { DreamDetails, Mood } from '@/data/types';
 import { useDreams } from '@/store/DreamsContext';
 import { colors, fonts, gradients, radius, spacing } from '@/theme';
 import { DateKey, formatDreamDateChip, yesterdayKey } from '@/utils/dreamDates';
+import { moodSelectionError } from '@/utils/moodSelection';
 
 type Mode = 'quick' | 'detailed';
 const MIN_LENGTH = MIN_DREAM_LENGTH;
@@ -29,7 +30,8 @@ export default function RecordScreen() {
   const [mode, setMode] = useState<Mode>(params.mode === 'detailed' ? 'detailed' : 'quick');
   const [text, setText] = useState('');
   const [title, setTitle] = useState('');
-  const [mood, setMood] = useState<Mood>('peaceful');
+  // Ordered emotions shared by Quick and Detailed; the first is the primary.
+  const [moods, setMoods] = useState<Mood[]>(() => [...DEFAULT_MOODS]);
   const [people, setPeople] = useState<string[]>([]);
   const [personDraft, setPersonDraft] = useState('');
   const [place, setPlace] = useState('');
@@ -57,7 +59,7 @@ export default function RecordScreen() {
   }, [pristine]));
 
   const reset = () => {
-    setText(''); setTitle(''); setMood('peaceful'); setPeople([]); setPersonDraft(''); setPlace('');
+    setText(''); setTitle(''); setMoods([...DEFAULT_MOODS]); setPeople([]); setPersonDraft(''); setPlace('');
     setTags([]); setTagDraft(''); setVividness(3); setLucid(false); setError(null); setPhase('idle');
     setDreamDate(yesterdayKey()); setDateTouched(false); setPickerOpen(false);
   };
@@ -90,12 +92,22 @@ export default function RecordScreen() {
       vividness,
       lucid,
     } : undefined;
+    const moodError = moodSelectionError(moods);
+    if (moodError) { setError(moodError); return; }
     const chosenDate = dreamDate; // captured now; the save completes after a short animation
+    const chosenMoods = [...moods];
     setPhase('saving');
     setTimeout(() => {
       setPhase('saved');
       setTimeout(() => {
-        const dream = addDream(text, mood, { title, details, dreamDate: chosenDate });
+        let dream;
+        try {
+          dream = addDream(text, chosenMoods, { title, details, dreamDate: chosenDate });
+        } catch (e) {
+          setPhase('idle');
+          setError(e instanceof Error ? e.message : 'This dream could not be saved.');
+          return;
+        }
         reset();
         router.push(`/reveal/${dream.id}`);
       }, 450);
@@ -124,17 +136,7 @@ export default function RecordScreen() {
       }
     />
   );
-  const moodChips = (
-    <View style={styles.field}>
-      <View style={styles.labelRow}>
-        <AppText variant="label" color={colors.textSecondary}>{mode === 'quick' ? 'How did it feel?' : 'Emotion'}</AppText>
-        <AppText variant="caption" color={colors.textMuted}>Choose one</AppText>
-      </View>
-      <View style={styles.chips}>
-        {MOODS.map((m) => <Chip key={m.key} label={m.label} selected={mood === m.key} onPress={() => setMood(m.key)} />)}
-      </View>
-    </View>
-  );
+  const moodChips = <MoodSelector value={moods} onChange={setMoods} />;
 
   return (
     <View style={styles.root}>

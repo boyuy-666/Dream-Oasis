@@ -6,6 +6,7 @@ import { Dream, DreamEdit, Mood, NewDreamExtras } from '@/data/types';
 import { removeDream } from '@/utils/dreamDelete';
 import { isFutureKey, isValidDateKey, toDateKey } from '@/utils/dreamDates';
 import { applyDreamEdit } from '@/utils/dreamEdit';
+import { assertValidMoods } from '@/utils/moodSelection';
 import { generateCard } from '@/utils/generateCard';
 
 const KEY = 'dream-oasis:dreams:v1';
@@ -13,7 +14,11 @@ const KEY = 'dream-oasis:dreams:v1';
 interface DreamsValue {
   dreams: Dream[];
   ready: boolean;
-  addDream: (text: string, mood: Mood, extras?: NewDreamExtras) => Dream;
+  /**
+   * Creates a dream from ordered emotions (1–3, unique; first = primary). Throws on a malformed
+   * selection instead of saving it. Generates exactly one card from the primary emotion.
+   */
+  addDream: (text: string, moods: Mood[], extras?: NewDreamExtras) => Dream;
   getDream: (id: string) => Dream | undefined;
   /**
    * Edits an existing dream in place (same id, createdAt and generated card).
@@ -75,13 +80,16 @@ export function DreamsProvider({ children }: { children: React.ReactNode }) {
     setDreams(next);
   }, [persist]);
 
-  const addDream = useCallback((text: string, mood: Mood, extras?: NewDreamExtras) => {
+  const addDream = useCallback((text: string, moods: Mood[], extras?: NewDreamExtras) => {
+    assertValidMoods(moods);
+    const mood = moods[0];
     const now = new Date();
     const chosen = extras?.dreamDate;
     const dream: Dream = {
       id: `${now.getTime()}`,
       text: text.trim(),
       mood,
+      moods: [...moods],
       createdAt: now.toISOString(),
       card: generateCard(text, mood),
       // Every new dream gets a valid, non-future calendar date.

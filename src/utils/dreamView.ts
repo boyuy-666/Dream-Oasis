@@ -1,7 +1,7 @@
 import { hashString, Motif, MOTIFS } from '@/art/botanical';
-import { MOODS } from '@/data/moods';
 import { Dream, DreamDetails, Rarity } from '@/data/types';
 import { DateKey, effectiveDreamDate } from '@/utils/dreamDates';
+import { effectiveMoods, moodLabel } from '@/utils/moodSelection';
 
 /**
  * Presentation model for Night Garden cards. Everything here is derived from the
@@ -14,7 +14,10 @@ export interface DreamView {
   motif: Motif;
   rarity: Rarity;
   element: string;
+  /** Primary emotion label (first selected). */
   emotion: string;
+  /** All selected emotion labels in order; the first is the primary. */
+  emotions: string[];
   reflection: string;
   symbols: string[];
   text: string;
@@ -45,9 +48,8 @@ export function motifFor(d: Dream): Motif {
   return hit ? hit[1] : MOTIFS[hashString(d.id) % (MOTIFS.length - 1)];
 }
 
-const moodLabel = (m: Dream['mood']) => MOODS.find((x) => x.key === m)?.label ?? 'Curious';
-
 export function toDreamView(d: Dream, no: number): DreamView {
+  const emotions = effectiveMoods(d).map(moodLabel);
   return {
     id: d.id,
     no,
@@ -55,7 +57,8 @@ export function toDreamView(d: Dream, no: number): DreamView {
     motif: motifFor(d),
     rarity: d.card.rarity,
     element: d.card.element,
-    emotion: moodLabel(d.mood),
+    emotion: emotions[0],
+    emotions,
     reflection: d.card.interpretation,
     symbols: d.card.symbols,
     text: d.text,

@@ -1,5 +1,7 @@
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
-export type Mood = 'peaceful' | 'joyful' | 'curious' | 'anxious' | 'eerie';
+export type Mood =
+  | 'peaceful' | 'joyful' | 'curious' | 'anxious' | 'eerie'
+  | 'sad' | 'excited' | 'confused' | 'angry' | 'nostalgic' | 'scared' | 'relieved' | 'lonely';
 
 export interface DreamCard {
   title: string;
@@ -25,6 +27,11 @@ export interface Dream {
   mood: Mood;
   createdAt: string; // ISO date
   card: DreamCard;
+  /**
+   * Ordered emotions (1–3, unique); the first is the primary and always equals `mood`.
+   * Absent on older records, whose emotions are just `[mood]`.
+   */
+  moods?: Mood[];
   /** User-chosen title; falls back to card.title when absent. */
   title?: string;
   details?: DreamDetails;
@@ -55,7 +62,8 @@ export interface NewDreamExtras {
  */
 export interface DreamEdit {
   text: string;
-  mood: Mood;
+  /** New ordered emotions (1–3); `undefined` keeps the dream's current emotions and data shape. */
+  moods?: Mood[];
   title?: string | null;
   details?: DreamDetails;
   /** New dream date (`YYYY-MM-DD`, not in the future); `undefined` keeps the current date state. */

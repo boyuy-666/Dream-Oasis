@@ -61,7 +61,6 @@ export default function CardDetailScreen() {
   const d = dream.details;
   const symbols = [...dream.symbols, ...(d?.tags ?? []).filter((t) => !dream.symbols.includes(t))];
   const facts: [string, string][] = [
-    ['Emotion', dream.emotion],
     ['Element', dream.element],
     ['People', d?.people?.length ? d.people.join(', ') : 'Just you'],
     ['Place', d?.place || 'Not noted'],
@@ -117,6 +116,22 @@ export default function CardDetailScreen() {
           <AppText variant="label" color={colors.textSecondary}>Symbols</AppText>
           <View style={styles.chips}>{symbols.map((s) => <Chip key={s} size="tag" label={s} marker={false} />)}</View>
         </View>
+        <View
+          style={styles.block}
+          accessible
+          accessibilityLabel={`${dream.emotions.length > 1 ? 'Emotions' : 'Emotion'}: ${dream.emotions.map((e, i) => (i === 0 && dream.emotions.length > 1 ? `${e} (primary)` : e)).join(', ')}`}
+        >
+          <AppText variant="label" color={colors.textMuted}>{dream.emotions.length > 1 ? 'Emotions' : 'Emotion'}</AppText>
+          <View style={styles.emotionRow}>
+            {dream.emotions.map((e, i) => (
+              <View key={e} style={styles.emotionItem}>
+                {i > 0 ? <AppText variant="small" color={colors.textMuted}>·</AppText> : null}
+                <AppText variant="small" color={i === 0 ? colors.text : colors.textSecondary} style={i === 0 ? { fontFamily: fonts.bodySemibold } : undefined}>{e}</AppText>
+                {i === 0 && dream.emotions.length > 1 ? <View style={styles.primaryTag}><AppText style={styles.primaryText}>Primary</AppText></View> : null}
+              </View>
+            ))}
+          </View>
+        </View>
         <View style={[styles.block, styles.facts]}>
           {facts.map(([k, v]) => (
             <View key={k} style={styles.fact}>
@@ -168,6 +183,10 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 0, rowGap: 14 },
   fact: { width: '50%', gap: 3, paddingRight: 12 },
+  emotionRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8, rowGap: 6 },
+  emotionItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  primaryTag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.glowA32 },
+  primaryText: { fontFamily: fonts.bodySemibold, fontSize: 11, lineHeight: 14, letterSpacing: 0.4, color: colors.glow },
   dangerZone: { marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, alignItems: 'center' },
   deleteAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, paddingHorizontal: spacing.md },
   deleteText: { fontFamily: fonts.bodySemibold, fontSize: 15, color: colors.danger },

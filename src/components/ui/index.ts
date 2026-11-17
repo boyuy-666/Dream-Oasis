@@ -8,6 +8,7 @@ export * from './DreamDatePicker';
 export * from './DreamRow';
 export * from './GlassCard';
 export * from './Icon';
+export * from './MoodSelector';
 export * from './Screen';
 export * from './Segmented';
 export * from './StatTile';

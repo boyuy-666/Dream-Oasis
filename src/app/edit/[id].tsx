@@ -4,19 +4,20 @@ import React, { useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, Chip, DreamDatePicker, Icon, TextField, UnsavedChangesDialog } from '@/components/ui';
+import { AppText, Button, Chip, DreamDatePicker, Icon, MoodSelector, TextField, UnsavedChangesDialog } from '@/components/ui';
 import { MIN_DREAM_LENGTH, SUGGESTED_TAGS } from '@/data/dreamForm';
-import { MOODS } from '@/data/moods';
 import { Dream, DreamEdit, Mood } from '@/data/types';
 import { useDreams } from '@/store/DreamsContext';
 import { colors, fonts, gradients, radius, spacing } from '@/theme';
 import { DateKey, effectiveDreamDate, formatKeyLong } from '@/utils/dreamDates';
 import { capitalize, padNo, toDreamViews } from '@/utils/dreamView';
+import { effectiveMoods, moodSelectionError, sameMoods } from '@/utils/moodSelection';
 
 interface FormState {
   text: string;
   title: string;
-  mood: Mood;
+  /** Ordered emotions; the first is the primary. Legacy records start as `[mood]`. */
+  moods: Mood[];
   people: string[];
   place: string;
   tags: string[];
@@ -31,7 +32,7 @@ function formFromDream(d: Dream): FormState {
   return {
     text: d.text,
     title: d.title ?? d.card.title,
-    mood: d.mood,
+    moods: effectiveMoods(d),
     people: d.details?.people ?? [],
     place: d.details?.place ?? '',
     tags: d.details?.tags ?? [],
@@ -43,7 +44,7 @@ function formFromDream(d: Dream): FormState {
 
 /** Comparable snapshot: whitespace, tag order and an unset lucid flag do not count as edits. */
 const snapshot = (f: FormState) => JSON.stringify({
-  text: f.text.trim(), title: f.title.trim(), mood: f.mood, people: f.people, place: f.place.trim(),
+  text: f.text.trim(), title: f.title.trim(), moods: f.moods, people: f.people, place: f.place.trim(),
   tags: [...f.tags].sort(), vividness: f.vividness ?? null, lucid: f.lucid ?? false, dreamDate: f.dreamDate,
 });
 
@@ -74,7 +75,8 @@ function toEdit(f: FormState, original: Dream): DreamEdit {
   const lucid = f.lucid === false && original.details?.lucid === undefined ? undefined : f.lucid;
   return {
     text: f.text,
-    mood: f.mood,
+    // Only a changed selection (set, order or primary) writes moods, so untouched legacy records keep their shape.
+    moods: sameMoods(f.moods, effectiveMoods(original)) ? undefined : f.moods,
     title,
     details: { people: f.people, place: f.place, tags: f.tags, vividness: f.vividness, lucid },
     // Only an actual date change writes dreamDate, so older records are not rewritten needlessly.
@@ -141,6 +143,8 @@ function EditForm({ dream }: { dream: Dream }) {
       setTextError('Write a few words so your card has something to grow from.');
       return false;
     }
+    const moodError = moodSelectionError(final.moods);
+    if (moodError) { setSaveError(moodError); return false; }
     savingRef.current = true;
     setPhase('saving');
     setSaveError(null);
@@ -299,15 +303,7 @@ function EditForm({ dream }: { dream: Dream }) {
 
           <TextField label="Place" icon="pin" value={form.place} onChangeText={(v) => set('place', v)} placeholder="Where did it happen?" returnKeyType="done" />
 
-          <View style={styles.field}>
-            <View style={styles.labelRow}>
-              <AppText variant="label" color={colors.textSecondary}>Emotion</AppText>
-              <AppText variant="caption" color={colors.textMuted}>Choose one</AppText>
-            </View>
-            <View style={styles.chips}>
-              {MOODS.map((m) => <Chip key={m.key} label={m.label} selected={form.mood === m.key} onPress={() => set('mood', m.key)} />)}
-            </View>
-          </View>
+          <MoodSelector value={form.moods} onChange={(m) => set('moods', m)} />
 
           <View style={styles.field}>
             <AppText variant="label" color={colors.textSecondary}>Symbols & tags</AppText>

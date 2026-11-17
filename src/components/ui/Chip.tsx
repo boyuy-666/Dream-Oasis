@@ -14,15 +14,17 @@ interface Props {
   size?: 'md' | 'tag';
   /** Show the leading dot / check affordance (filters hide it). */
   marker?: boolean;
+  /** Overrides the spoken label (defaults to the visible label). */
+  accessibilityLabel?: string;
 }
 
 /** Emotion, tag and filter chip. Selected = moth-paper fill (glow stays reserved for actions). */
-export function Chip({ label, selected, onPress, count, size = 'md', marker = true }: Props) {
+export function Chip({ label, selected, onPress, count, size = 'md', marker = true, accessibilityLabel }: Props) {
   const fg = selected ? colors.mossNight : colors.textSecondary;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={count !== undefined ? `${label}, ${count}` : label}
+      accessibilityLabel={accessibilityLabel ?? (count !== undefined ? `${label}, ${count}` : label)}
       accessibilityState={{ selected: !!selected }}
       hitSlop={4}
       disabled={!onPress}
