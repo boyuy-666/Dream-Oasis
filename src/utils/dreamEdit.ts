@@ -1,4 +1,5 @@
 import { Dream, DreamDetails, DreamEdit } from '@/data/types';
+import { isFutureKey, isValidDateKey } from '@/utils/dreamDates';
 import { motifFor } from '@/utils/dreamView';
 
 const EDITABLE_DETAILS: (keyof DreamDetails)[] = ['people', 'place', 'tags', 'vividness', 'lucid'];
@@ -17,6 +18,13 @@ export function applyDreamEdit(prev: Dream, edit: DreamEdit): Dream {
   next.card = prev.card;
   // Freeze the artwork the card shows *before* this edit (first edit only).
   if (!prev.motif) next.motif = motifFor(prev);
+
+  // Only an explicit date change writes dreamDate; older records are otherwise left as they were.
+  if (edit.dreamDate !== undefined) {
+    if (!isValidDateKey(edit.dreamDate)) throw new Error(`Invalid dream date: ${edit.dreamDate}`);
+    if (isFutureKey(edit.dreamDate)) throw new Error('A dream date cannot be in the future');
+    next.dreamDate = edit.dreamDate;
+  }
 
   if (edit.title !== undefined) {
     const t = edit.title?.trim();

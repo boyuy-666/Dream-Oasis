@@ -6,7 +6,7 @@ import { renderArt, renderOrnament } from '@/art/botanical';
 import { AppText, Art } from '@/components/ui';
 import { Rarity } from '@/data/types';
 import { colors, fonts, gradients } from '@/theme';
-import { fmtLong, fmtShort } from '@/utils/dates';
+import { formatKeyCardLong, formatKeyCardShort } from '@/utils/dreamDates';
 import { capitalize, DreamView, padNo } from '@/utils/dreamView';
 
 /** Card proportions shared by every size (300 × 452 reference). */
@@ -121,11 +121,11 @@ export function DreamCard({ dream, width, still }: Props) {
             )}
             <View style={[styles.foot, { gap: 3 * cq }, !compact && { marginTop: 'auto' }]}>
               {compact ? (
-                <AppText style={[styles.footCompact, { fontSize: Math.max(10.5, 6.4 * cq) }]} numberOfLines={1}>{dream.emotion} · {fmtShort(dream.createdAt)}</AppText>
+                <AppText style={[styles.footCompact, { fontSize: Math.max(10.5, 6.4 * cq) }]} numberOfLines={1}>{dream.emotion} · {formatKeyCardShort(dream.dreamDate)}</AppText>
               ) : (
                 <>
                   <View style={[styles.rule, { backgroundColor: fx.ornament }]} />
-                  <AppText style={[styles.footText, { fontSize: 3.6 * cq, letterSpacing: 3.6 * cq * 0.08 }]}>{fmtLong(dream.createdAt)}</AppText>
+                  <AppText style={[styles.footText, { fontSize: 3.6 * cq, letterSpacing: 3.6 * cq * 0.08 }]}>{formatKeyCardLong(dream.dreamDate)}</AppText>
                   <View style={[styles.rule, { backgroundColor: fx.ornament }]} />
                 </>
               )}

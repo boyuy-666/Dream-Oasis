@@ -1,6 +1,7 @@
 import { hashString, Motif, MOTIFS } from '@/art/botanical';
 import { MOODS } from '@/data/moods';
 import { Dream, DreamDetails, Rarity } from '@/data/types';
+import { DateKey, effectiveDreamDate } from '@/utils/dreamDates';
 
 /**
  * Presentation model for Night Garden cards. Everything here is derived from the
@@ -18,6 +19,8 @@ export interface DreamView {
   symbols: string[];
   text: string;
   createdAt: string;
+  /** Effective calendar day of the dream (stored dreamDate, else local day of createdAt). */
+  dreamDate: DateKey;
   details?: DreamDetails;
 }
 
@@ -57,6 +60,7 @@ export function toDreamView(d: Dream, no: number): DreamView {
     symbols: d.card.symbols,
     text: d.text,
     createdAt: d.createdAt,
+    dreamDate: effectiveDreamDate(d),
     details: d.details,
   };
 }

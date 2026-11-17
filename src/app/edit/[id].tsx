@@ -4,12 +4,13 @@ import React, { useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, Chip, Icon, TextField, UnsavedChangesDialog } from '@/components/ui';
+import { AppText, Button, Chip, DreamDatePicker, Icon, TextField, UnsavedChangesDialog } from '@/components/ui';
 import { MIN_DREAM_LENGTH, SUGGESTED_TAGS } from '@/data/dreamForm';
 import { MOODS } from '@/data/moods';
 import { Dream, DreamEdit, Mood } from '@/data/types';
 import { useDreams } from '@/store/DreamsContext';
 import { colors, fonts, gradients, radius, spacing } from '@/theme';
+import { DateKey, effectiveDreamDate, formatKeyLong } from '@/utils/dreamDates';
 import { capitalize, padNo, toDreamViews } from '@/utils/dreamView';
 
 interface FormState {
@@ -21,6 +22,8 @@ interface FormState {
   tags: string[];
   vividness?: number;
   lucid?: boolean;
+  /** Effective dream date shown in the picker (stored dreamDate, else local day of createdAt). */
+  dreamDate: DateKey;
 }
 
 /** Form values for an existing record. Missing optional fields stay unset (no empty defaults). */
@@ -34,13 +37,14 @@ function formFromDream(d: Dream): FormState {
     tags: d.details?.tags ?? [],
     vividness: d.details?.vividness,
     lucid: d.details?.lucid,
+    dreamDate: effectiveDreamDate(d),
   };
 }
 
 /** Comparable snapshot: whitespace, tag order and an unset lucid flag do not count as edits. */
 const snapshot = (f: FormState) => JSON.stringify({
   text: f.text.trim(), title: f.title.trim(), mood: f.mood, people: f.people, place: f.place.trim(),
-  tags: [...f.tags].sort(), vividness: f.vividness ?? null, lucid: f.lucid ?? false,
+  tags: [...f.tags].sort(), vividness: f.vividness ?? null, lucid: f.lucid ?? false, dreamDate: f.dreamDate,
 });
 
 /** Splits a typed entry on commas, trims each part and drops empties. */
@@ -73,6 +77,8 @@ function toEdit(f: FormState, original: Dream): DreamEdit {
     mood: f.mood,
     title,
     details: { people: f.people, place: f.place, tags: f.tags, vividness: f.vividness, lucid },
+    // Only an actual date change writes dreamDate, so older records are not rewritten needlessly.
+    dreamDate: f.dreamDate !== effectiveDreamDate(original) ? f.dreamDate : undefined,
   };
 }
 
@@ -111,6 +117,7 @@ function EditForm({ dream }: { dream: Dream }) {
   /** Set once the user chose to leave: turns the guard off before navigation continues. */
   const [exitReason, setExitReason] = useState<'saved' | 'discarded' | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const savingRef = useRef(false);
   /** Continues the navigation that was blocked when the dialog opened (null if none pending). */
   const pendingExitRef = useRef<(() => void) | null>(null);
@@ -235,6 +242,21 @@ function EditForm({ dream }: { dream: Dream }) {
             </AppText>
           </View>
 
+          <View style={styles.field}>
+            <AppText variant="label" color={colors.textSecondary}>Dreamed on</AppText>
+            <Pressable
+              onPress={() => setPickerOpen(true)}
+              style={({ pressed }) => [styles.dateBox, pressed && { opacity: 0.85 }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Dreamed on ${formatKeyLong(form.dreamDate)}`}
+              accessibilityHint="Change the day you had this dream"
+            >
+              <Icon name="calendar" size={18} color={colors.textMuted} />
+              <AppText style={{ flex: 1 }}>{formatKeyLong(form.dreamDate)}</AppText>
+              <Icon name="chevron" size={16} color={colors.textMuted} />
+            </Pressable>
+          </View>
+
           <TextField label="Title" value={form.title} onChangeText={(v) => set('title', v)} placeholder={dream.card.title} returnKeyType="next" />
           <TextField
             label="What happened"
@@ -347,6 +369,12 @@ function EditForm({ dream }: { dream: Dream }) {
         onKeepEditing={onKeepEditing}
         onDiscard={onDiscard}
       />
+      <DreamDatePicker
+        visible={pickerOpen}
+        value={form.dreamDate}
+        onConfirm={(key) => { set('dreamDate', key); setPickerOpen(false); }}
+        onCancel={() => setPickerOpen(false)}
+      />
     </View>
   );
 }
@@ -359,6 +387,7 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   cancel: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44 },
   idChip: { minHeight: 36, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border },
+  dateBox: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 50, paddingHorizontal: 16, borderRadius: radius.md, backgroundColor: colors.surfaceSunk, borderWidth: 1, borderColor: colors.border },
   note: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   field: { gap: 8 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },

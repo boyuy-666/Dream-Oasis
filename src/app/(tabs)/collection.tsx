@@ -53,7 +53,18 @@ export default function CollectionScreen() {
   const header = (
     <View style={styles.header}>
       <View style={{ gap: 8 }}>
-        <AppText variant="label" color={colors.textSecondary}>Collection</AppText>
+        <View style={styles.eyebrowRow}>
+          <AppText variant="label" color={colors.textSecondary}>Collection</AppText>
+          <Pressable
+            onPress={() => router.push('/calendar')}
+            style={({ pressed }) => [styles.calendarBtn, pressed && { opacity: 0.8 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Open Dream Calendar"
+            hitSlop={6}
+          >
+            <Icon name="calendar" size={18} color={colors.text} />
+          </Pressable>
+        </View>
         <View style={styles.headRow}>
           <AppText variant="title">Your night{'\n'}garden</AppText>
           <View style={{ alignItems: 'flex-end' }}>
@@ -164,6 +175,8 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.lg, gap: 18 },
   column: { gap: 14 },
   header: { gap: 22, marginBottom: 4 },
+  eyebrowRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  calendarBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.paperA06, borderWidth: 1, borderColor: colors.border },
   headRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   count: { fontFamily: fonts.display, fontSize: 48, lineHeight: 52, color: colors.text, fontVariant: ['tabular-nums'] },
   bar: { flexDirection: 'row', height: 6, borderRadius: 3, overflow: 'hidden', gap: 2 },

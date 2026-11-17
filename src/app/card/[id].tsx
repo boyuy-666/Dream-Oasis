@@ -8,6 +8,7 @@ import { AppText, Button, Chip, DeleteDreamDialog, Icon, RarityTag } from '@/com
 import { useDreams } from '@/store/DreamsContext';
 import { colors, fonts, radius, spacing } from '@/theme';
 import { fmtLong, fmtTime } from '@/utils/dates';
+import { formatKeyLong } from '@/utils/dreamDates';
 import { capitalize, padNo, toDreamViews } from '@/utils/dreamView';
 
 const CARD_W = 252;
@@ -34,8 +35,10 @@ export default function CardDetailScreen() {
       await deleteDream(dream.id); // resolves only after storage accepted the deletion
       setDeletePhase('deleted');
       setDeleteOpen(false);
-      // Close this sheet and land on Collection (replaces the route if Collection is not below it).
-      router.dismissTo('/collection');
+      // Close this sheet and return to where it was opened (Collection or Calendar);
+      // opened directly, fall back to Collection.
+      if (router.canGoBack()) router.back();
+      else router.replace('/collection');
     } catch {
       setDeletePhase('idle');
       setDeleteError('This dream could not be deleted. It is still in your collection, so please try again.');
@@ -93,8 +96,11 @@ export default function CardDetailScreen() {
 
         <View style={{ gap: 6 }}>
           <AppText variant="title">{dream.title}</AppText>
+          <AppText variant="small" accessibilityLabel={`Dreamed on ${formatKeyLong(dream.dreamDate)}`}>
+            <AppText variant="small" color={colors.textSecondary}>Dreamed on </AppText>{formatKeyLong(dream.dreamDate)}
+          </AppText>
           <View style={styles.metaRow}>
-            <AppText variant="caption" color={colors.textSecondary}>{fmtLong(dream.createdAt)} · {fmtTime(dream.createdAt)} ·</AppText>
+            <AppText variant="caption" color={colors.textMuted}>Recorded {fmtLong(dream.createdAt)} · {fmtTime(dream.createdAt)} ·</AppText>
             <RarityTag rarity={dream.rarity} />
           </View>
         </View>

@@ -29,6 +29,11 @@ export interface Dream {
   title?: string;
   details?: DreamDetails;
   /**
+   * Calendar day the dream happened (`YYYY-MM-DD`, a date — not a timestamp). Set on new dreams;
+   * absent on older records, whose effective date is the local day of `createdAt`.
+   */
+  dreamDate?: string;
+  /**
    * Botanical artwork motif frozen on the first edit, so editing text/title never changes
    * the card's illustration. Absent on unedited records (motif is then derived as before).
    */
@@ -38,6 +43,8 @@ export interface Dream {
 export interface NewDreamExtras {
   title?: string;
   details?: DreamDetails;
+  /** `YYYY-MM-DD`; defaults to the local day of creation when absent/invalid. */
+  dreamDate?: string;
 }
 
 /**
@@ -51,4 +58,6 @@ export interface DreamEdit {
   mood: Mood;
   title?: string | null;
   details?: DreamDetails;
+  /** New dream date (`YYYY-MM-DD`, not in the future); `undefined` keeps the current date state. */
+  dreamDate?: string;
 }

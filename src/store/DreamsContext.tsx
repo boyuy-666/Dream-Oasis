@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { SAMPLE_DREAMS } from '@/data/sampleDreams';
 import { Dream, DreamEdit, Mood, NewDreamExtras } from '@/data/types';
 import { removeDream } from '@/utils/dreamDelete';
+import { isFutureKey, isValidDateKey, toDateKey } from '@/utils/dreamDates';
 import { applyDreamEdit } from '@/utils/dreamEdit';
 import { generateCard } from '@/utils/generateCard';
 
@@ -75,12 +76,16 @@ export function DreamsProvider({ children }: { children: React.ReactNode }) {
   }, [persist]);
 
   const addDream = useCallback((text: string, mood: Mood, extras?: NewDreamExtras) => {
+    const now = new Date();
+    const chosen = extras?.dreamDate;
     const dream: Dream = {
-      id: `${Date.now()}`,
+      id: `${now.getTime()}`,
       text: text.trim(),
       mood,
-      createdAt: new Date().toISOString(),
+      createdAt: now.toISOString(),
       card: generateCard(text, mood),
+      // Every new dream gets a valid, non-future calendar date.
+      dreamDate: isValidDateKey(chosen) && !isFutureKey(chosen, now) ? chosen : toDateKey(now),
     };
     const title = extras?.title?.trim();
     if (title) dream.title = title;

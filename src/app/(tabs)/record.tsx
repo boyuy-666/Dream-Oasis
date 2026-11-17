@@ -4,13 +4,13 @@ import React, { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, Chip, Icon, Segmented, TextField } from '@/components/ui';
+import { AppText, Button, Chip, DreamDatePicker, Icon, Segmented, TextField } from '@/components/ui';
 import { MIN_DREAM_LENGTH, SUGGESTED_TAGS } from '@/data/dreamForm';
 import { MOODS } from '@/data/moods';
 import { DreamDetails, Mood } from '@/data/types';
 import { useDreams } from '@/store/DreamsContext';
 import { colors, fonts, gradients, radius, spacing } from '@/theme';
-import { fmtShort } from '@/utils/dates';
+import { DateKey, formatDreamDateChip, yesterdayKey } from '@/utils/dreamDates';
 
 type Mode = 'quick' | 'detailed';
 const MIN_LENGTH = MIN_DREAM_LENGTH;
@@ -40,15 +40,26 @@ export default function RecordScreen() {
   const [lucid, setLucid] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'idle' | 'saving' | 'saved'>('idle');
+  // One dream date shared by Quick and Detailed; a new entry starts on the local "yesterday".
+  const [dreamDate, setDreamDate] = useState<DateKey>(() => yesterdayKey());
+  const [dateTouched, setDateTouched] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pristine = !text && !title && !dateTouched;
 
   // Honour "or write a detailed entry" links each time the tab is focused with a mode param.
   useFocusEffect(useCallback(() => {
     if (params.mode === 'detailed' || params.mode === 'quick') setMode(params.mode);
   }, [params.mode]));
 
+  // An untouched, empty form left open overnight follows the new "yesterday"; an entry in progress never changes date.
+  useFocusEffect(useCallback(() => {
+    if (pristine) setDreamDate(yesterdayKey());
+  }, [pristine]));
+
   const reset = () => {
     setText(''); setTitle(''); setMood('peaceful'); setPeople([]); setPersonDraft(''); setPlace('');
     setTags([]); setTagDraft(''); setVividness(3); setLucid(false); setError(null); setPhase('idle');
+    setDreamDate(yesterdayKey()); setDateTouched(false); setPickerOpen(false);
   };
 
   const addPerson = () => {
@@ -79,11 +90,12 @@ export default function RecordScreen() {
       vividness,
       lucid,
     } : undefined;
+    const chosenDate = dreamDate; // captured now; the save completes after a short animation
     setPhase('saving');
     setTimeout(() => {
       setPhase('saved');
       setTimeout(() => {
-        const dream = addDream(text, mood, { title, details });
+        const dream = addDream(text, mood, { title, details, dreamDate: chosenDate });
         reset();
         router.push(`/reveal/${dream.id}`);
       }, 450);
@@ -138,10 +150,17 @@ export default function RecordScreen() {
               <Icon name="back" size={20} color={colors.textSecondary} />
               <AppText color={colors.textSecondary} style={{ fontFamily: fonts.bodyMedium }}>Cancel</AppText>
             </Pressable>
-            <View style={styles.dateChip}>
+            <Pressable
+              onPress={() => setPickerOpen(true)}
+              style={({ pressed }) => [styles.dateChip, pressed && { opacity: 0.8 }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Dream date: ${formatDreamDateChip(dreamDate)}`}
+              accessibilityHint="Choose the day you had this dream"
+              hitSlop={4}
+            >
               <Icon name="calendar" size={16} color={colors.textSecondary} />
-              <AppText variant="caption" color={colors.textSecondary}>Last night · {fmtShort(new Date().toISOString())}</AppText>
-            </View>
+              <AppText variant="caption" color={colors.textSecondary}>{formatDreamDateChip(dreamDate)}</AppText>
+            </Pressable>
           </View>
 
           <View style={{ gap: 6 }}>
@@ -242,6 +261,12 @@ export default function RecordScreen() {
           </AppText>
         </View>
       </KeyboardAvoidingView>
+      <DreamDatePicker
+        visible={pickerOpen}
+        value={dreamDate}
+        onConfirm={(key) => { setDreamDate(key); setDateTouched(true); setPickerOpen(false); }}
+        onCancel={() => setPickerOpen(false)}
+      />
     </View>
   );
 }
