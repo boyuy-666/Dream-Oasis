@@ -43,6 +43,26 @@ const snapshot = (f: FormState) => JSON.stringify({
   tags: [...f.tags].sort(), vividness: f.vividness ?? null, lucid: f.lucid ?? false,
 });
 
+/** Splits a typed entry on commas, trims each part and drops empties. */
+const entries = (raw: string) => raw.split(',').map((x) => x.trim()).filter(Boolean);
+
+/** Adds entries to a list without duplicates (case-insensitive); reuses an existing label's spelling. */
+function addEntries(list: string[], raw: string, known: string[] = []): string[] {
+  const next = [...list];
+  for (const value of entries(raw)) {
+    const label = [...next, ...known].find((x) => x.toLowerCase() === value.toLowerCase()) ?? value;
+    if (!next.some((x) => x.toLowerCase() === label.toLowerCase())) next.push(label);
+  }
+  return next;
+}
+
+/** The form as it would be saved, with any unconfirmed People / Tags input committed. */
+const withPending = (f: FormState, personDraft: string, tagDraft: string): FormState => ({
+  ...f,
+  people: addEntries(f.people, personDraft),
+  tags: addEntries(f.tags, tagDraft, SUGGESTED_TAGS),
+});
+
 function toEdit(f: FormState, original: Dream): DreamEdit {
   const t = f.title.trim();
   // An untouched card title stays a fallback rather than becoming a stored custom title.
@@ -95,13 +115,22 @@ function EditForm({ dream }: { dream: Dream }) {
   /** Continues the navigation that was blocked when the dialog opened (null if none pending). */
   const pendingExitRef = useRef<(() => void) | null>(null);
 
-  const dirty = snapshot(form) !== snapshot(initial);
+  const hasDrafts = personDraft.trim().length > 0 || tagDraft.trim().length > 0;
+  const dirty = hasDrafts || snapshot(form) !== snapshot(initial);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
 
   /** Validates and persists. Resolves true only after storage accepted the change. */
   const save = async (): Promise<boolean> => {
     if (savingRef.current) return false;
-    if (form.text.trim().length < MIN_DREAM_LENGTH) {
+    // Commit any People / Tags the user typed but did not confirm with Return or +.
+    const final = withPending(form, personDraft, tagDraft);
+    if (personDraft || tagDraft) {
+      setForm(final);
+      setCustomTags((c) => addEntries(c, final.tags.filter((t) => !SUGGESTED_TAGS.includes(t)).join(',')));
+      setPersonDraft('');
+      setTagDraft('');
+    }
+    if (final.text.trim().length < MIN_DREAM_LENGTH) {
       setTextError('Write a few words so your card has something to grow from.');
       return false;
     }
@@ -109,7 +138,7 @@ function EditForm({ dream }: { dream: Dream }) {
     setPhase('saving');
     setSaveError(null);
     try {
-      await updateDream(dream.id, toEdit(form, dream));
+      await updateDream(dream.id, toEdit(final, dream));
       setPhase('saved');
       return true;
     } catch {
@@ -155,17 +184,22 @@ function EditForm({ dream }: { dream: Dream }) {
   // Discard never touches storage: the stored dream is left exactly as it was.
   const onDiscard = () => leave('discarded');
 
-  const addPerson = () => {
-    const v = personDraft.trim().replace(/,$/, '');
-    if (v && !form.people.includes(v)) set('people', [...form.people, v]);
+  // Values are passed explicitly (never read from a just-set draft) to avoid stale state.
+  const addPerson = (raw: string = personDraft) => {
+    setForm((f) => ({ ...f, people: addEntries(f.people, raw) }));
     setPersonDraft('');
   };
-  const addTag = () => {
-    const v = tagDraft.trim();
-    if (v) {
-      if (!SUGGESTED_TAGS.includes(v) && !customTags.includes(v)) setCustomTags([...customTags, v]);
-      if (!form.tags.includes(v)) set('tags', [...form.tags, v]);
-    }
+  const onPersonChange = (v: string) => {
+    if (!v.includes(',')) { setPersonDraft(v); return; }
+    const cut = v.lastIndexOf(',');
+    addPerson(v.slice(0, cut)); // commit everything before the last comma
+    setPersonDraft(v.slice(cut + 1).trimStart());
+  };
+  const addTag = (raw: string = tagDraft) => {
+    const tags = addEntries(form.tags, raw, SUGGESTED_TAGS);
+    const added = tags.filter((t) => !form.tags.includes(t) && !SUGGESTED_TAGS.includes(t));
+    set('tags', tags);
+    if (added.length) setCustomTags((c) => addEntries(c, added.join(',')));
     setTagDraft('');
   };
   const toggleTag = (t: string) => set('tags', form.tags.includes(t) ? form.tags.filter((x) => x !== t) : [...form.tags, t]);
@@ -226,8 +260,8 @@ function EditForm({ dream }: { dream: Dream }) {
               ))}
               <TextInput
                 value={personDraft}
-                onChangeText={(v) => (v.endsWith(',') ? (setPersonDraft(v), addPerson()) : setPersonDraft(v))}
-                onSubmitEditing={addPerson}
+                onChangeText={onPersonChange}
+                onSubmitEditing={() => addPerson()}
                 submitBehavior="submit"
                 placeholder="Who was there?"
                 placeholderTextColor={colors.placeholder}
@@ -237,7 +271,7 @@ function EditForm({ dream }: { dream: Dream }) {
                 style={styles.tokenInput}
                 accessibilityLabel="Add a person"
               />
-              <Pressable onPress={addPerson} style={styles.addBtn} accessibilityRole="button" accessibilityLabel="Add person"><Icon name="plus" size={16} color={colors.text} /></Pressable>
+              <Pressable onPress={() => addPerson()} style={styles.addBtn} accessibilityRole="button" accessibilityLabel="Add person"><Icon name="plus" size={16} color={colors.text} /></Pressable>
             </View>
           </View>
 
@@ -258,7 +292,7 @@ function EditForm({ dream }: { dream: Dream }) {
             <View style={styles.chips}>
               {[...SUGGESTED_TAGS, ...customTags].map((t) => <Chip key={t} size="tag" label={t} selected={form.tags.includes(t)} onPress={() => toggleTag(t)} />)}
             </View>
-            <TextField label="Add your own" icon="tag" value={tagDraft} onChangeText={setTagDraft} onSubmitEditing={addTag} submitBehavior="submit" placeholder="Type a symbol and press return" returnKeyType="done" />
+            <TextField label="Add your own" icon="tag" value={tagDraft} onChangeText={setTagDraft} onSubmitEditing={() => addTag()} submitBehavior="submit" placeholder="Type a symbol and press return" returnKeyType="done" />
           </View>
 
           <View style={styles.field}>
