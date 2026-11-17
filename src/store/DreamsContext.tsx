@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { SAMPLE_DREAMS } from '@/data/sampleDreams';
 import { Dream, DreamEdit, Mood, NewDreamExtras } from '@/data/types';
+import { removeDream } from '@/utils/dreamDelete';
 import { applyDreamEdit } from '@/utils/dreamEdit';
 import { generateCard } from '@/utils/generateCard';
 
@@ -19,6 +20,12 @@ interface DreamsValue {
    * if the dream is missing or the write fails.
    */
   updateDream: (id: string, edit: DreamEdit) => Promise<Dream>;
+  /**
+   * Permanently deletes exactly one dream (and its card). Resolves only after storage accepted
+   * the change; rejects (and changes nothing) for a missing id, a duplicate request or a failed write.
+   * Deleting the last dream stores `[]`, so sample dreams never return.
+   */
+  deleteDream: (id: string) => Promise<void>;
 }
 
 const Ctx = createContext<DreamsValue | null>(null);
@@ -29,6 +36,17 @@ export function DreamsProvider({ children }: { children: React.ReactNode }) {
   // Latest list for async operations (kept in sync after each commit).
   const dreamsRef = useRef<Dream[]>([]);
   useEffect(() => { dreamsRef.current = dreams; }, [dreams]);
+  // All storage writes run one after another in the order issued, so an older write can never
+  // land after (and overwrite) a newer one such as an edit or a deletion.
+  const writeChain = useRef<Promise<unknown>>(Promise.resolve());
+  // The list an explicit operation already persisted; the sync effect skips re-writing it.
+  const persistedRef = useRef<Dream[] | null>(null);
+  const deletingRef = useRef(new Set<string>());
+  const persist = useCallback((list: Dream[]) => {
+    const run = writeChain.current.catch(() => {}).then(() => AsyncStorage.setItem(KEY, JSON.stringify(list)));
+    writeChain.current = run;
+    return run;
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -44,8 +62,17 @@ export function DreamsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (ready) AsyncStorage.setItem(KEY, JSON.stringify(dreams)).catch(() => {});
-  }, [dreams, ready]);
+    if (!ready || dreams === persistedRef.current) return;
+    persist(dreams).catch(() => {});
+  }, [dreams, ready, persist]);
+
+  /** Persists `next` first; only then commits it to state. */
+  const commit = useCallback(async (next: Dream[]) => {
+    await persist(next);
+    persistedRef.current = next;
+    dreamsRef.current = next;
+    setDreams(next);
+  }, [persist]);
 
   const addDream = useCallback((text: string, mood: Mood, extras?: NewDreamExtras) => {
     const dream: Dream = {
@@ -71,13 +98,24 @@ export function DreamsProvider({ children }: { children: React.ReactNode }) {
     const updated = applyDreamEdit(current[index], edit);
     const next = current.map((d, i) => (i === index ? updated : d));
     // Persist first: the UI must not report success unless storage accepted the change.
-    await AsyncStorage.setItem(KEY, JSON.stringify(next));
-    dreamsRef.current = next;
-    setDreams(next);
+    await commit(next);
     return updated;
-  }, []);
+  }, [commit]);
 
-  const value = useMemo(() => ({ dreams, ready, addDream, getDream, updateDream }), [dreams, ready, addDream, getDream, updateDream]);
+  const deleteDream = useCallback(async (id: string) => {
+    if (deletingRef.current.has(id)) throw new Error(`Dream ${id} is already being deleted`);
+    deletingRef.current.add(id);
+    try {
+      await commit(removeDream(dreamsRef.current, id)); // throws if the id is missing
+    } finally {
+      deletingRef.current.delete(id);
+    }
+  }, [commit]);
+
+  const value = useMemo(
+    () => ({ dreams, ready, addDream, getDream, updateDream, deleteDream }),
+    [dreams, ready, addDream, getDream, updateDream, deleteDream],
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

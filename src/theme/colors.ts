@@ -59,6 +59,8 @@ export const colors = {
   bloomA16: 'rgba(232,160,174,0.16)',
   bloomA45: 'rgba(232,160,174,0.45)',
   scrim: 'rgba(7,11,9,0.72)',
+  dangerA08: 'rgba(242,167,160,0.08)',
+  dangerA45: 'rgba(242,167,160,0.45)',
   badgeBg: 'rgba(15,22,19,0.72)',
 
   // Dream card rarity

@@ -1,10 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CardBack, CardFlip, DreamCard } from '@/components/card';
-import { AppText, Button, Chip, Icon, RarityTag } from '@/components/ui';
+import { AppText, Button, Chip, DeleteDreamDialog, Icon, RarityTag } from '@/components/ui';
 import { useDreams } from '@/store/DreamsContext';
 import { colors, fonts, radius, spacing } from '@/theme';
 import { fmtLong, fmtTime } from '@/utils/dates';
@@ -17,11 +17,36 @@ export default function CardDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { dreams } = useDreams();
+  const { dreams, deleteDream } = useDreams();
   const dream = useMemo(() => toDreamViews(dreams).find((d) => d.id === id), [dreams, id]);
   const [faceUp, setFaceUp] = useState(true);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePhase, setDeletePhase] = useState<'idle' | 'deleting' | 'deleted'>('idle');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deletingRef = useRef(false);
+
+  const confirmDelete = async () => {
+    if (!dream || deletingRef.current) return; // no overlapping deletions
+    deletingRef.current = true;
+    setDeletePhase('deleting');
+    setDeleteError(null);
+    try {
+      await deleteDream(dream.id); // resolves only after storage accepted the deletion
+      setDeletePhase('deleted');
+      setDeleteOpen(false);
+      // Close this sheet and land on Collection (replaces the route if Collection is not below it).
+      router.dismissTo('/collection');
+    } catch {
+      setDeletePhase('idle');
+      setDeleteError('This dream could not be deleted. It is still in your collection, so please try again.');
+    } finally {
+      deletingRef.current = false;
+    }
+  };
 
   if (!dream) {
+    // Deleted just now: stay blank while the sheet closes instead of flashing "Card not found".
+    if (deletePhase !== 'idle') return <View style={styles.root} />;
     return (
       <View style={[styles.root, styles.center]}>
         <AppText variant="title" center>Card not found</AppText>
@@ -95,7 +120,27 @@ export default function CardDetailScreen() {
           ))}
         </View>
         <Button label="Share this card" icon="share" variant="secondary" onPress={share} />
+
+        <View style={styles.dangerZone}>
+          <Pressable
+            onPress={() => { setDeleteError(null); setDeleteOpen(true); }}
+            style={({ pressed }) => [styles.deleteAction, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Delete dream"
+            accessibilityHint="Asks for confirmation before permanently deleting this dream"
+          >
+            <Icon name="trash" size={18} color={colors.danger} />
+            <AppText style={styles.deleteText}>Delete dream</AppText>
+          </Pressable>
+        </View>
       </ScrollView>
+      <DeleteDreamDialog
+        visible={deleteOpen}
+        deleting={deletePhase === 'deleting'}
+        error={deleteError}
+        onKeep={() => { setDeleteOpen(false); setDeleteError(null); }}
+        onDelete={() => { confirmDelete().catch(() => {}); }}
+      />
     </View>
   );
 }
@@ -117,4 +162,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: 0, rowGap: 14 },
   fact: { width: '50%', gap: 3, paddingRight: 12 },
+  dangerZone: { marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, alignItems: 'center' },
+  deleteAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 48, paddingHorizontal: spacing.md },
+  deleteText: { fontFamily: fonts.bodySemibold, fontSize: 15, color: colors.danger },
 });
