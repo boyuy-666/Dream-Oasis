@@ -36,6 +36,7 @@ function Shell() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="reveal/[id]" options={{ animation: 'fade', presentation: 'fullScreenModal', gestureEnabled: false }} />
+      <Stack.Screen name="card/[id]" options={{ presentation: 'modal', contentStyle: { backgroundColor: colors.surface } }} />
     </Stack>
   );
 }

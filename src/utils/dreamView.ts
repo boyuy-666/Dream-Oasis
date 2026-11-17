@@ -22,15 +22,15 @@ export interface DreamView {
 }
 
 const RULES: [RegExp, Motif][] = [
-  [/library|book|underwater|swim|lake/, 'lake'],
-  [/fly|flying|flight|wing|moth|butterfl|bird|choir|sing/, 'moths'],
-  [/ocean|sea|water|river|pool|stair|tide|flood|wave/, 'tide'],
-  [/door|gate|key|threshold/, 'door'],
-  [/house|home|grand|greenhouse|rose|garden/, 'greenhouse'],
-  [/forest|fern|lantern|path|woods|star/, 'lantern'],
-  [/fall|petal|drop/, 'petals'],
-  [/clock|late|time|hour|mushroom/, 'mushrooms'],
-  [/tree|orchard|glass|fruit|bell|fire/, 'orchard'],
+  [/\b(library|libraries|books?|underwater|swim\w*|lakes?)\b/, 'lake'],
+  [/\b(fly|flying|flew|flight|wings?|moths?|butterfl\w+|birds?|choir|sing\w*)\b/, 'moths'],
+  [/\b(oceans?|seas?|water\w*|rivers?|pools?|stair\w*|tides?|flood\w*|waves?)\b/, 'tide'],
+  [/\b(doors?|gates?|keys?|threshold)\b/, 'door'],
+  [/\b(house|houses|home|grand\w*|greenhouse|roses?|garden\w*)\b/, 'greenhouse'],
+  [/\b(forests?|ferns?|lanterns?|path\w*|woods|stars?)\b/, 'lantern'],
+  [/\b(fall\w*|fell|petals?|drop\w*)\b/, 'petals'],
+  [/\b(clocks?|late|time|hours?|mushrooms?)\b/, 'mushrooms'],
+  [/\b(trees?|orchards?|glass|fruit\w*|bells?|fire)\b/, 'orchard'],
 ];
 
 export function motifFor(d: Dream): Motif {

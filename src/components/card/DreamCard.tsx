@@ -91,7 +91,7 @@ export function DreamCard({ dream, width, still }: Props) {
             <LinearGradient colors={gradients.artFade} style={[styles.fade, { height: artH * 0.22 }]} pointerEvents="none" />
           </View>
 
-          <View style={[styles.head, { top: 3.4 * cq, left: 3.4 * cq, right: 3.4 * cq }]}>
+          <View style={[styles.head, fx.corners.includes('tr') ? { top: 5 * cq, left: 7 * cq, right: 7 * cq } : { top: 3.4 * cq, left: 3.4 * cq, right: 3.4 * cq }]}>
             <AppText style={[styles.no, { fontSize: Math.max(11, 5.2 * cq) }]}>Nº {padNo(dream.no)}</AppText>
             {legendary ? (
               <LinearGradient colors={gradients.legendaryBadge} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={[styles.badge, styles.badgeGlow, { paddingHorizontal: 3 * cq, paddingVertical: 1.1 * cq }]}>

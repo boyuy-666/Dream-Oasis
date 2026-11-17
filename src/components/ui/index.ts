@@ -2,7 +2,6 @@ export * from './AppText';
 export * from './Art';
 export * from './Button';
 export * from './Chip';
-export * from './DreamCardView';
 export * from './DreamRow';
 export * from './GlassCard';
 export * from './Icon';
