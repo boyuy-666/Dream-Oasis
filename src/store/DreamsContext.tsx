@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { SAMPLE_DREAMS } from '@/data/sampleDreams';
-import { Dream, Mood } from '@/data/types';
+import { Dream, Mood, NewDreamExtras } from '@/data/types';
 import { generateCard } from '@/utils/generateCard';
 
 const KEY = 'dream-oasis:dreams:v1';
@@ -10,7 +10,7 @@ const KEY = 'dream-oasis:dreams:v1';
 interface DreamsValue {
   dreams: Dream[];
   ready: boolean;
-  addDream: (text: string, mood: Mood) => Dream;
+  addDream: (text: string, mood: Mood, extras?: NewDreamExtras) => Dream;
   getDream: (id: string) => Dream | undefined;
 }
 
@@ -37,7 +37,7 @@ export function DreamsProvider({ children }: { children: React.ReactNode }) {
     if (ready) AsyncStorage.setItem(KEY, JSON.stringify(dreams)).catch(() => {});
   }, [dreams, ready]);
 
-  const addDream = useCallback((text: string, mood: Mood) => {
+  const addDream = useCallback((text: string, mood: Mood, extras?: NewDreamExtras) => {
     const dream: Dream = {
       id: `${Date.now()}`,
       text: text.trim(),
@@ -45,6 +45,9 @@ export function DreamsProvider({ children }: { children: React.ReactNode }) {
       createdAt: new Date().toISOString(),
       card: generateCard(text, mood),
     };
+    const title = extras?.title?.trim();
+    if (title) dream.title = title;
+    if (extras?.details) dream.details = extras.details;
     setDreams((d) => [dream, ...d]);
     return dream;
   }, []);

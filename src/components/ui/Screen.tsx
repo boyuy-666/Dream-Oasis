@@ -1,48 +1,34 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, gradients, spacing } from '@/theme';
-import { StarField } from './StarField';
+import { colors, spacing } from '@/theme';
 
 interface Props {
   children: React.ReactNode;
   scroll?: boolean;
-  /** Extra bottom padding, e.g. to clear a tab bar. */
+  /** Extra bottom padding, e.g. to clear a floating bar. */
   bottomInset?: number;
-  /** Show a faint moon halo in the top corner (use sparingly, e.g. Home). */
-  moon?: boolean;
+  /** Optional ambient decoration drawn behind the content (scrolls with it). */
+  decor?: React.ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
 }
 
-/** Midnight-blue gradient screen shell with restrained stars and safe-area padding. */
-export function Screen({ children, scroll = true, bottomInset = 0, moon, contentStyle }: Props) {
+/** Moss-night screen shell with safe-area padding and a 24pt gutter. */
+export function Screen({ children, scroll = true, bottomInset = 0, decor, contentStyle }: Props) {
   const insets = useSafeAreaInsets();
-  const pad = { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.lg + bottomInset };
+  const pad = { paddingTop: insets.top + spacing.sm, paddingBottom: spacing.xl + bottomInset };
   return (
     <View style={styles.root}>
-      <LinearGradient colors={gradients.background} style={StyleSheet.absoluteFill} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} />
-      {moon && (
-        <View pointerEvents="none" style={[styles.moonWrap, { top: insets.top - 70 }]}>
-          <View style={[styles.halo, styles.haloOuter]} />
-          <View style={[styles.halo, styles.haloInner]} />
-        </View>
-      )}
-      <StarField />
       <StatusBar style="light" />
       {scroll ? (
-        <ScrollView
-          contentContainerStyle={[styles.content, pad, contentStyle]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-        >
+        <ScrollView contentContainerStyle={[styles.content, pad, contentStyle]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
+          {decor}
           {children}
         </ScrollView>
       ) : (
-        <View style={[styles.content, styles.flex, pad, contentStyle]}>{children}</View>
+        <View style={[styles.content, styles.flex, pad, contentStyle]}>{decor}{children}</View>
       )}
     </View>
   );
@@ -51,9 +37,5 @@ export function Screen({ children, scroll = true, bottomInset = 0, moon, content
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
   flex: { flex: 1 },
-  content: { paddingHorizontal: spacing.lg, gap: spacing.lg },
-  moonWrap: { position: 'absolute', right: -90, width: 260, height: 260, alignItems: 'center', justifyContent: 'center' },
-  halo: { position: 'absolute', borderRadius: 999, backgroundColor: colors.highlight },
-  haloOuter: { width: 260, height: 260, opacity: 0.035 },
-  haloInner: { width: 150, height: 150, opacity: 0.06 },
+  content: { paddingHorizontal: spacing.lg, gap: 28 },
 });

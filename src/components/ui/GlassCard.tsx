@@ -6,23 +6,16 @@ import { colors, radius, spacing } from '@/theme';
 interface Props {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
-  /** Emphasised surface with a moonlight-blue border (e.g. primary CTA card). */
+  /** Emphasised surface with a soft glow border. */
   accent?: boolean;
 }
 
-/** Elevated navy surface used for content panels. */
+/** Greenhouse surface panel. */
 export function GlassCard({ children, style, accent }: Props) {
   return <View style={[styles.card, accent && styles.accent, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surfaceGlass,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  accent: { backgroundColor: colors.surface, borderColor: colors.accentBorder },
+  card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm },
+  accent: { borderColor: 'rgba(201,232,107,0.22)' },
 });

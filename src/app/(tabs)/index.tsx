@@ -1,124 +1,135 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, Button, GlassCard, Screen, StatTile } from '@/components/ui';
-import { Dream } from '@/data/types';
+import { BRAND_EMBLEM, renderArt, renderCtaArt, renderHomeDecor } from '@/art/botanical';
+import { AppText, Art, Button, DreamRow, GlassCard, StatTile, Screen } from '@/components/ui';
 import { useDreams } from '@/store/DreamsContext';
-import { colors, radius, spacing } from '@/theme';
+import { colors, fonts, radius, spacing } from '@/theme';
+import { fmtRelative, fmtTime, fmtWeekday, greeting } from '@/utils/dates';
+import { toDreamViews } from '@/utils/dreamView';
 import { dreamStats } from '@/utils/stats';
-
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return 'The night is still';
-  if (h < 12) return 'Good morning, dreamer';
-  if (h < 18) return 'Good afternoon, dreamer';
-  return 'Good evening, dreamer';
-}
-
-function RecentRow({ dream, onPress }: { dream: Dream; onPress: () => void }) {
-  const accent = colors.rarity[dream.card.rarity] ?? colors.rarity.common;
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${dream.card.title}, ${dream.card.rarity} card`}
-      style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}
-    >
-      <View style={[styles.rowGlyph, { borderColor: accent }]}>
-        <AppText style={styles.rowGlyphText}>{dream.card.glyph}</AppText>
-      </View>
-      <View style={styles.rowBody}>
-        <AppText variant="body" numberOfLines={1} style={styles.rowTitle}>{dream.card.title}</AppText>
-        <AppText variant="caption" color={colors.textSecondary} numberOfLines={1}>
-          {new Date(dream.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · <AppText variant="caption" color={accent}>{dream.card.rarity}</AppText>
-        </AppText>
-      </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-    </Pressable>
-  );
-}
 
 export default function HomeScreen() {
   const router = useRouter();
   const { dreams } = useDreams();
+  const views = useMemo(() => toDreamViews(dreams), [dreams]);
+  const recent = useMemo(() => [...views].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 3), [views]);
   const stats = dreamStats(dreams);
-  const recent = dreams.slice(0, 3);
+  const latest = recent[0];
+  const quote = views.find((v) => v.rarity === 'legendary') ?? latest;
+  const decorXml = useMemo(() => renderHomeDecor(), []);
+  const ctaXml = useMemo(() => renderCtaArt(), []);
+  const latestXml = useMemo(() => (latest ? renderArt(latest.motif, latest.rarity, latest.id) : ''), [latest]);
 
   return (
-    <Screen moon>
-      <View style={styles.header}>
+    <Screen decor={<View pointerEvents="none" style={styles.decor}><Art xml={decorXml} /></View>}>
+      <View style={styles.top}>
         <View style={styles.brand}>
-          <Ionicons name="moon-outline" size={14} color={colors.accent} />
-          <AppText variant="label" color={colors.accent}>Dream Oasis</AppText>
+          <Art xml={BRAND_EMBLEM} width={26} height={26} />
+          <AppText style={styles.brandText}>Dream Oasis</AppText>
         </View>
-        <AppText variant="hero">{greeting()}</AppText>
-        <AppText color={colors.textSecondary}>A quiet place to remember what the night revealed.</AppText>
+        <Pressable style={styles.avatar} onPress={() => router.push('/profile')} accessibilityRole="button" accessibilityLabel="Profile" hitSlop={6}>
+          <AppText style={styles.avatarText}>D</AppText>
+        </Pressable>
       </View>
 
-      <GlassCard accent>
-        <AppText variant="heading">Capture a dream</AppText>
-        <AppText variant="caption" color={colors.textSecondary}>
-          Write it down while it is still fresh, then unveil your Dream Card.
+      <View style={styles.hero}>
+        <AppText variant="label" color={colors.textSecondary}>{fmtWeekday(new Date())}</AppText>
+        <AppText variant="hero">
+          {greeting()},{'\n'}
+          <AppText variant="hero" color={colors.nightBloom} style={{ fontFamily: fonts.displayItalic }}>dreamer</AppText>
         </AppText>
-        <View style={{ marginTop: spacing.sm }}>
-          <Button label="Record a Dream" onPress={() => router.push('/record')} />
-        </View>
-      </GlassCard>
-
-      <View style={styles.stats}>
-        <StatTile value={stats.total} label="Dreams" />
-        <StatTile value={stats.rarePlus} label="Rare+ cards" />
-        <StatTile value={stats.thisWeek} label="This week" />
+        <AppText color={colors.textSecondary} style={styles.lede}>
+          The garden grew quietly while you slept. Write down what you remember while it is still close.
+        </AppText>
       </View>
 
-      <View style={{ gap: spacing.md }}>
+      {latest && (
+        <Pressable onPress={() => router.push(`/reveal/${latest.id}`)} style={({ pressed }) => [styles.latest, pressed && { opacity: 0.9 }]} accessibilityRole="button" accessibilityLabel={`Latest bloom, ${latest.title}. Reveal again`}>
+          <View style={styles.latestThumb}><Art xml={latestXml} /></View>
+          <View style={styles.latestBody}>
+            <AppText variant="label" color={colors.glow}>Latest bloom</AppText>
+            <AppText style={styles.latestTitle} numberOfLines={1}>{latest.title}</AppText>
+            <AppText variant="caption" color={colors.textSecondary}>
+              Recorded {fmtRelative(latest.createdAt).toLowerCase()} at {fmtTime(latest.createdAt)}
+            </AppText>
+          </View>
+          <View style={styles.pill}><AppText variant="small" color={colors.glow} style={{ fontFamily: fonts.bodySemibold }}>Reveal</AppText></View>
+        </Pressable>
+      )}
+
+      <View style={styles.cta}>
+        <View pointerEvents="none" style={styles.ctaArt}><Art xml={ctaXml} /></View>
+        <View style={styles.ctaCopy}>
+          <AppText variant="label" color={colors.textSecondary}>Before it fades</AppText>
+          <AppText style={styles.ctaTitle}>What did the night leave behind?</AppText>
+          <AppText variant="small" color={colors.textSecondary}>Most dreams fade within minutes of waking. A few lines are enough.</AppText>
+        </View>
+        <Button label="Record a dream" icon="pen" onPress={() => router.push('/record')} />
+        <Pressable onPress={() => router.push({ pathname: '/record', params: { mode: 'detailed' } })} style={styles.alt} hitSlop={6} accessibilityRole="button">
+          <AppText variant="small" color={colors.textSecondary}>or write a <AppText variant="small" color={colors.textSecondary} style={styles.underline}>detailed entry</AppText></AppText>
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
+        <AppText variant="label" color={colors.textSecondary}>Your garden</AppText>
+        <View style={styles.stats}>
+          <StatTile value={stats.total} label="Dreams" sub={`${stats.thisWeek} this week`} />
+          <StatTile value={stats.streak} label="Night streak" spark={stats.week} />
+          <StatTile value={stats.rarePlus} label="Rare+ cards" sub={stats.legendary ? `${stats.legendary} legendary` : `${stats.epic} epic`} />
+        </View>
+      </View>
+
+      <View style={styles.section}>
         <View style={styles.sectionHead}>
           <AppText variant="heading">Recent dreams</AppText>
-          {dreams.length > 0 && (
-            <Pressable onPress={() => router.push('/collection')} hitSlop={12} accessibilityRole="link">
-              <AppText variant="caption" color={colors.accent}>View all</AppText>
+          {views.length > 0 && (
+            <Pressable onPress={() => router.push('/collection')} hitSlop={10} accessibilityRole="link">
+              <AppText variant="small" color={colors.textSecondary} style={styles.underline}>See all</AppText>
             </Pressable>
           )}
         </View>
         {recent.length ? (
-          <GlassCard style={styles.list}>
-            {recent.map((d, i) => (
-              <View key={d.id}>
-                {i > 0 && <View style={styles.sep} />}
-                <RecentRow dream={d} onPress={() => router.push(`/reveal/${d.id}`)} />
-              </View>
-            ))}
-          </GlassCard>
+          <View>{recent.map((v, i) => <DreamRow key={v.id} dream={v} first={i === 0} onPress={() => router.push(`/reveal/${v.id}`)} />)}</View>
         ) : (
-          <GlassCard>
-            <AppText color={colors.textSecondary}>No dreams yet. Your first card is waiting.</AppText>
-          </GlassCard>
+          <GlassCard><AppText color={colors.textSecondary}>No dreams yet. Your first card is a few sentences away.</AppText></GlassCard>
         )}
       </View>
+
+      {quote && (
+        <View style={styles.quote}>
+          <AppText variant="label" color={colors.textSecondary}>From your garden · {quote.title}</AppText>
+          <AppText style={styles.quoteText}>“{quote.reflection.split('. ')[0].replace(/\.$/, '')}.”</AppText>
+        </View>
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { gap: spacing.sm, marginTop: spacing.sm },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  stats: { flexDirection: 'row', gap: spacing.sm },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  list: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, gap: 0 },
-  sep: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 56 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 64, paddingVertical: spacing.sm },
-  rowGlyph: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.bgDeep,
-  },
-  rowGlyphText: { fontSize: 18, lineHeight: 22 },
-  rowBody: { flex: 1, gap: 2 },
-  rowTitle: { fontWeight: '600' },
+  decor: { position: 'absolute', top: 0, right: -24, width: 250, height: 300 },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  brandText: { fontFamily: fonts.display, fontSize: 21, color: colors.text },
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.borderStrong },
+  avatarText: { fontFamily: fonts.display, fontSize: 19, color: colors.text },
+  hero: { gap: 12, paddingTop: 6 },
+  lede: { maxWidth: 330, lineHeight: 25 },
+  latest: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 14, paddingRight: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: 'rgba(201,232,107,0.22)' },
+  latestThumb: { width: 54, height: 72, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderStrong },
+  latestBody: { flex: 1, minWidth: 0, gap: 3 },
+  latestTitle: { fontFamily: fonts.display, fontSize: 21, lineHeight: 24, color: colors.text },
+  pill: { minHeight: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: colors.glowA16, justifyContent: 'center' },
+  cta: { overflow: 'hidden', paddingHorizontal: 20, paddingTop: 22, paddingBottom: 14, borderRadius: radius.xl, backgroundColor: '#1C2823', borderWidth: 1, borderColor: colors.border, gap: 16 },
+  ctaArt: { position: 'absolute', right: -10, top: -6, width: 150, height: 170 },
+  ctaCopy: { gap: 8, maxWidth: 220 },
+  ctaTitle: { fontFamily: fonts.display, fontSize: 26, lineHeight: 28, color: colors.text },
+  alt: { alignSelf: 'center', minHeight: 32, justifyContent: 'center' },
+  underline: { textDecorationLine: 'underline', textDecorationColor: colors.borderStrong },
+  section: { gap: spacing.sm + 4 },
+  sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  stats: { flexDirection: 'row', gap: 10 },
+  quote: { paddingTop: 20, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 8 },
+  quoteText: { fontFamily: fonts.displayItalic, fontSize: 20, lineHeight: 27, color: colors.text },
 });
