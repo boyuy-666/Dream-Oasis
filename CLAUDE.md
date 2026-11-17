@@ -44,6 +44,7 @@ Import with the `@/` alias (maps to `src/`).
 - Stored dreams are never rewritten. Card display fields (motif, card number, element/emotion labels) are derived in `utils/dreamView.ts`.
 - New optional fields (`title`, `details`) are additive; keep older records valid.
 - `generateCard` owns rarity and generated content — UI work must not change it.
+- Rarity is rolled once with `Math.random()` when a dream is created (common 50% · rare 32% · epic 14% · legendary 4%, `RARITY_ODDS`) and stored in `card.rarity`. Never re-roll or recompute rarity for an existing dream.
 
 ## Design system — Night Garden (approved)
 Nocturnal botanical sanctuary: moss-black calm, moth-paper type, rare bioluminescent glow, night-bloom flowers. No celestial/astrology clichés, no neon overload.

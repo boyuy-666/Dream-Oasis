@@ -1,7 +1,9 @@
 import { DreamCard, Mood, Rarity } from '@/data/types';
 
 /**
- * Phase 1 placeholder: deterministic, fully offline "card generator".
+ * Phase 1 placeholder: fully offline "card generator".
+ * Title, symbols, element and interpretation are derived from the dream text;
+ * rarity is a genuine random roll (see RARITY_ODDS).
  * Free by design (no network, no paid API). Phase 2+ can swap this for an
  * on-device or free-tier AI provider behind the same signature.
  */
@@ -26,20 +28,32 @@ const FALLBACK = {
   meaning: 'a quiet message from your subconscious',
 };
 
-function hash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
+/** Odds for a new Dream Card's rarity, in percent. Must sum to 100. */
+export const RARITY_ODDS: readonly { rarity: Rarity; percent: number }[] = [
+  { rarity: 'common', percent: 50 },
+  { rarity: 'rare', percent: 32 },
+  { rarity: 'epic', percent: 14 },
+  { rarity: 'legendary', percent: 4 },
+];
+
+/**
+ * One independent rarity roll. `random` must return a number in [0, 1), like Math.random.
+ * Boundaries on the 0–100 scale: common [0, 50) · rare [50, 82) · epic [82, 96) · legendary [96, 100).
+ */
+export function rollRarity(random: () => number = Math.random): Rarity {
+  const roll = random() * 100;
+  let ceiling = 0;
+  for (const { rarity, percent } of RARITY_ODDS) {
+    ceiling += percent;
+    if (roll < ceiling) return rarity;
+  }
+  return RARITY_ODDS[RARITY_ODDS.length - 1].rarity; // floating-point guard
 }
 
-function pickRarity(text: string): Rarity {
-  const roll = hash(text) % 100;
-  if (roll >= 96) return 'legendary';
-  if (roll >= 82) return 'epic';
-  if (roll >= 50) return 'rare';
-  return 'common';
-}
-
+/**
+ * Builds the card for a NEW dream. Rarity is rolled here exactly once; the caller must
+ * persist the returned card with the dream and never call this again for an existing dream.
+ */
 export function generateCard(text: string, mood: Mood): DreamCard {
   const words = text.toLowerCase().match(/[a-z]+/g) ?? [];
   const found: (typeof SYMBOLS)[string][] = [];
@@ -58,7 +72,7 @@ export function generateCard(text: string, mood: Mood): DreamCard {
   const meaning = (lead ?? FALLBACK).meaning;
   return {
     title,
-    rarity: pickRarity(text),
+    rarity: rollRarity(),
     element: (lead ?? FALLBACK).element,
     glyph: (lead ?? FALLBACK).glyph,
     symbols,
