@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { BRAND_EMBLEM, renderArt, renderCtaArt, renderHomeDecor } from '@/art/botanical';
+import { BRAND_EMBLEM, renderCtaArt, renderHomeDecor } from '@/art/botanical';
+import { CardBack } from '@/components/card';
 import { AppText, Art, Button, DreamRow, GlassCard, StatTile, Screen } from '@/components/ui';
 import { useDreams } from '@/store/DreamsContext';
 import { colors, fonts, radius, spacing } from '@/theme';
@@ -20,7 +21,6 @@ export default function HomeScreen() {
   const quote = views.find((v) => v.rarity === 'legendary') ?? latest;
   const decorXml = useMemo(() => renderHomeDecor(), []);
   const ctaXml = useMemo(() => renderCtaArt(), []);
-  const latestXml = useMemo(() => (latest ? renderArt(latest.motif, latest.rarity, latest.id) : ''), [latest]);
 
   return (
     <Screen decor={<View pointerEvents="none" style={styles.decor}><Art xml={decorXml} /></View>}>
@@ -47,7 +47,7 @@ export default function HomeScreen() {
 
       {latest && (
         <Pressable onPress={() => router.push(`/reveal/${latest.id}`)} style={({ pressed }) => [styles.latest, pressed && { opacity: 0.9 }]} accessibilityRole="button" accessibilityLabel={`Latest bloom, ${latest.title}. Reveal again`}>
-          <View style={styles.latestThumb}><Art xml={latestXml} /></View>
+          <CardBack width={54} breathe={false} />
           <View style={styles.latestBody}>
             <AppText variant="label" color={colors.glow}>Latest bloom</AppText>
             <AppText style={styles.latestTitle} numberOfLines={1}>{latest.title}</AppText>
@@ -117,7 +117,6 @@ const styles = StyleSheet.create({
   hero: { gap: 12, paddingTop: 6 },
   lede: { maxWidth: 330, lineHeight: 25 },
   latest: { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 14, paddingRight: 16, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: 'rgba(201,232,107,0.22)' },
-  latestThumb: { width: 54, height: 72, borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderStrong },
   latestBody: { flex: 1, minWidth: 0, gap: 3 },
   latestTitle: { fontFamily: fonts.display, fontSize: 21, lineHeight: 24, color: colors.text },
   pill: { minHeight: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: colors.glowA16, justifyContent: 'center' },
