@@ -1,0 +1,91 @@
+/* =========================================================
+   Dream Oasis — Night Garden design tokens
+   Layout concept: one quiet column inside an iPhone frame,
+   botanical art lives in cards; glow is reserved for action.
+   ========================================================= */
+:root {
+  color-scheme: dark;
+
+  /* ---- Approved palette (Concept B) ---- */
+  --moss-night: #0F1613;   /* app background */
+  --greenhouse: #18221E;   /* surfaces */
+  --moth-paper: #ECE7DA;   /* primary text */
+  --glow:       #C9E86B;   /* bioluminescent accent — use sparingly */
+  --night-bloom:#E8A0AE;   /* flowers, epic accents */
+  --lichen:     #A9B3A7;   /* secondary text */
+  --fern:       #2F3E36;   /* lines, borders */
+
+  /* ---- Derived tones (same hue family) ---- */
+  --moss-deep:        #0A0F0D;  /* page behind the device */
+  --greenhouse-sunk:  #131B17;  /* inputs, wells */
+  --greenhouse-raised:#1D2924;  /* raised surfaces, sheets */
+  --fern-strong:      #3C5045;  /* hover / pressed borders */
+  --muted:            #7E8A80;  /* tertiary text (5.1:1 on moss) */
+  --glow-ink:         #14200F;  /* text on glow */
+  --danger:           #F2A7A0;  /* validation (8.4:1 on greenhouse) */
+
+  --glow-a08: rgba(201, 232, 107, .08);
+  --glow-a16: rgba(201, 232, 107, .16);
+  --glow-a32: rgba(201, 232, 107, .32);
+  --bloom-a16: rgba(232, 160, 174, .16);
+  --bloom-a40: rgba(232, 160, 174, .40);
+  --paper-a06: rgba(236, 231, 218, .06);
+  --paper-a12: rgba(236, 231, 218, .12);
+  --lichen-a40: rgba(169, 179, 167, .40);
+  --scrim: rgba(7, 11, 9, .72);
+
+  /* ---- Semantic roles ---- */
+  --bg: var(--moss-night);
+  --surface: var(--greenhouse);
+  --surface-raised: var(--greenhouse-raised);
+  --surface-sunk: var(--greenhouse-sunk);
+  --text: var(--moth-paper);
+  --text-2: var(--lichen);
+  --text-3: var(--muted);
+  --line: var(--fern);
+  --line-strong: var(--fern-strong);
+  --accent: var(--glow);
+  --on-accent: var(--glow-ink);
+  --focus: var(--glow);
+
+  /* ---- Rarity ---- */
+  --rarity-common: var(--lichen);
+  --rarity-rare: #C9D3C4;
+  --rarity-epic: var(--night-bloom);
+  --rarity-legendary: var(--glow);
+
+  /* ---- Type ---- */
+  --font-display: "Instrument Serif", "Iowan Old Style", "Palatino", Georgia, serif;
+  --font-body: "Instrument Sans", -apple-system, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+
+  --t-hero: 40px;      --lh-hero: 1.02;
+  --t-title: 30px;     --lh-title: 1.08;
+  --t-heading: 22px;   --lh-heading: 1.18;
+  --t-body: 16px;      --lh-body: 1.5;
+  --t-small: 14px;     --lh-small: 1.45;
+  --t-caption: 13px;   --lh-caption: 1.35;
+  --t-label: 11px;     --tr-label: .14em;
+
+  /* ---- Space (4pt grid) ---- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-10: 40px;
+  --gutter: 24px;
+
+  /* ---- Radius ---- */
+  --r-xs: 6px; --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
+
+  /* ---- Elevation ---- */
+  --shadow-card: 0 22px 44px -22px rgba(0, 0, 0, .85), 0 2px 8px rgba(0, 0, 0, .35);
+  --shadow-sheet: 0 -20px 60px rgba(0, 0, 0, .6);
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .5, 1);
+  --dur-1: 160ms; --dur-2: 280ms; --dur-3: 520ms; --dur-flip: 950ms;
+
+  /* ---- Device ---- */
+  --device-w: 393px;
+  --device-h: 852px;
+  --status-h: 54px;
+  --tab-h: 84px;
+}

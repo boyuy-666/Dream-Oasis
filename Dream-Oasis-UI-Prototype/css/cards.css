@@ -1,0 +1,157 @@
+/* =========================================================
+   Dream Card system — botanical specimen cards
+   One component, sized by its container (cqw units):
+   300pt reveal card, 164pt grid card and the detail card
+   all share the same proportions (2 : 3.02).
+   ========================================================= */
+.dcard {
+  --frame-line: var(--fern);
+  --inner-line: transparent;
+  --ornament: var(--lichen);
+  --rarity-ink: var(--rarity-common);
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 300 / 452;
+  max-width: 100%;
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+.dcard__frame {
+  position: absolute; inset: 0;
+  padding: 3cqw;
+  border-radius: 5cqw;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(236, 231, 218, .04), transparent 60%),
+    var(--surface);
+  box-shadow: inset 0 0 0 1px var(--frame-line), var(--shadow-card);
+}
+.dcard__inner {
+  position: relative; height: 100%;
+  display: flex; flex-direction: column;
+  border-radius: 3.4cqw;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--inner-line);
+}
+
+/* --- Art window: ~59% of the card's height --- */
+.dcard__art { position: relative; flex: none; height: 59.5%; overflow: hidden; border-radius: 3.4cqw 3.4cqw 0 0; background: var(--surface-sunk); }
+.dcard__art svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dcard__art::after { /* soft fade into the label area */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 22%;
+  background: linear-gradient(to bottom, transparent, rgba(24, 34, 30, .9));
+  pointer-events: none;
+}
+.dcard__head {
+  position: absolute; z-index: 2; top: 3.4cqw; left: 3.4cqw; right: 3.4cqw;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.dcard__no { font-family: var(--font-display); font-style: italic; font-size: max(11px, 5.2cqw); color: var(--text); opacity: .85; text-shadow: 0 1px 6px rgba(0, 0, 0, .6); }
+.dcard__badge {
+  display: inline-flex; align-items: center; gap: 1.6cqw;
+  padding: 1.1cqw 3cqw; border-radius: 99px;
+  font-size: max(8.5px, 3.4cqw); letter-spacing: .16em; text-transform: uppercase; font-weight: 700;
+  color: var(--rarity-ink); background: rgba(15, 22, 19, .72); box-shadow: inset 0 0 0 1px rgba(236, 231, 218, .12);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.dcard__badge::before { content: ""; width: 1.8cqw; height: 1.8cqw; min-width: 5px; min-height: 5px; border-radius: 50%; background: currentColor; }
+
+/* --- Label area --- */
+.dcard__body {
+  position: relative; flex: 1; min-height: 0;
+  display: flex; flex-direction: column; gap: 2.4cqw;
+  padding: 4cqw 5cqw 3cqw;
+}
+.dcard__title { font-family: var(--font-display); font-size: 9.6cqw; line-height: 1.02; letter-spacing: -.005em; text-wrap: balance; }
+.dcard__facts { display: flex; gap: 5cqw; margin: 0; }
+.dcard__facts div { display: flex; flex-direction: column; gap: .4cqw; min-width: 0; }
+.dcard__facts dt { font-size: max(8px, 3.1cqw); letter-spacing: .16em; text-transform: uppercase; color: var(--text-3); font-weight: 600; }
+.dcard__facts dd { margin: 0; font-size: 4.6cqw; color: var(--text-2); white-space: nowrap; }
+.dcard__reflection { font-family: var(--font-display); font-style: italic; font-size: 5.3cqw; line-height: 1.32; color: var(--text); opacity: .9; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dcard__foot { margin-top: auto; display: flex; align-items: center; gap: 3cqw; color: var(--text-3); font-size: 3.6cqw; letter-spacing: .08em; }
+.dcard__foot svg { flex: 1; height: 3cqw; min-height: 6px; color: var(--ornament); opacity: .7; }
+.dcard__foot-compact { display: none; }
+
+/* Compact (grid) presentation — same component, less copy */
+@container (max-width: 230px) {
+  .dcard__art { height: 67%; }
+  .dcard__body { padding: 4.5cqw 6cqw 5cqw; gap: 2cqw; }
+  .dcard__title { font-size: max(15px, 10.6cqw); line-height: 1.05; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .dcard__facts, .dcard__reflection { display: none; }
+  .dcard__foot { font-size: max(10.5px, 6.4cqw); letter-spacing: .02em; color: var(--text-2); }
+  .dcard__foot svg { display: none; }
+  .dcard__badge { padding: 1.4cqw 3.6cqw; }
+  .dcard__foot-full { display: none; }
+  .dcard__foot-compact { display: inline; }
+}
+
+/* --- Corner ornaments (rare and above) --- */
+.dcard__corner { position: absolute; z-index: 3; width: 21cqw; height: 21cqw; color: var(--ornament); pointer-events: none; display: none; }
+.dcard__corner--tl { top: 1.2cqw; left: 1.2cqw; }
+.dcard__corner--tr { top: 1.2cqw; right: 1.2cqw; transform: scaleX(-1); }
+.dcard__corner--bl { bottom: 1.2cqw; left: 1.2cqw; transform: scaleY(-1); }
+.dcard__corner--br { bottom: 1.2cqw; right: 1.2cqw; transform: scale(-1, -1); }
+
+/* =================== Rarity treatments =================== */
+/* Common — matte specimen, single hairline */
+.dcard[data-rarity="common"] .dcard__art svg { filter: saturate(.82); }
+
+/* Rare — double rule, silver-lichen leaf sprigs */
+.dcard[data-rarity="rare"] {
+  --frame-line: #56685C; --inner-line: rgba(201, 211, 196, .26); --ornament: #C9D3C4; --rarity-ink: var(--rarity-rare);
+}
+.dcard[data-rarity="rare"] .dcard__corner--tl, .dcard[data-rarity="rare"] .dcard__corner--br { display: block; }
+
+/* Epic — night-bloom vines on all corners, pearl sheen over the art */
+.dcard[data-rarity="epic"] {
+  --frame-line: rgba(232, 160, 174, .45); --inner-line: rgba(232, 160, 174, .3); --ornament: var(--night-bloom); --rarity-ink: var(--rarity-epic);
+}
+.dcard[data-rarity="epic"] .dcard__frame { box-shadow: inset 0 0 0 1px var(--frame-line), 0 0 0 1px rgba(232, 160, 174, .08), 0 24px 48px -24px rgba(232, 160, 174, .35), var(--shadow-card); }
+.dcard[data-rarity="epic"] .dcard__corner { display: block; }
+.dcard[data-rarity="epic"] .dcard__art::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(125deg, transparent 30%, rgba(255, 220, 228, .10) 45%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+/* Legendary — living glow frame, full vine border, moving foil */
+.dcard[data-rarity="legendary"] { --ornament: var(--glow); --rarity-ink: var(--glow-ink); }
+.dcard[data-rarity="legendary"] .dcard__frame {
+  border: 1.5px solid transparent;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(201, 232, 107, .07), transparent 60%) padding-box,
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    conic-gradient(from 200deg, #C9E86B, #E8A0AE 18%, #3C5045 34%, #C9E86B 50%, #ECE7DA 62%, #3C5045 78%, #C9E86B) border-box;
+  box-shadow: 0 0 0 1px rgba(201, 232, 107, .18), 0 0 46px -8px rgba(201, 232, 107, .38), var(--shadow-card);
+}
+.dcard[data-rarity="legendary"] .dcard__inner { box-shadow: inset 0 0 0 1px rgba(201, 232, 107, .35); }
+.dcard[data-rarity="legendary"] .dcard__corner { display: block; }
+.dcard[data-rarity="legendary"] .dcard__badge { background: linear-gradient(100deg, #C9E86B, #E6F3B8 50%, #C9E86B); color: var(--glow-ink); box-shadow: 0 0 14px rgba(201, 232, 107, .45); }
+.dcard[data-rarity="legendary"] .dcard__art::before {
+  content: ""; position: absolute; inset: -40%; z-index: 1; pointer-events: none;
+  background: linear-gradient(115deg, transparent 42%, rgba(230, 243, 184, .16) 48%, rgba(255, 220, 228, .12) 52%, transparent 58%);
+  mix-blend-mode: screen; animation: foil 5.5s var(--ease-out) infinite;
+}
+.dcard[data-rarity="legendary"] .dcard__title { color: #F4F0E6; }
+@keyframes foil { 0% { transform: translateX(-45%); } 60%, 100% { transform: translateX(45%); } }
+
+/* --- Selection / press states --- */
+.dcard-btn { display: block; width: 100%; text-align: left; border-radius: 5cqw; transition: transform var(--dur-2) var(--ease-out); }
+.dcard-btn:active { transform: scale(.975); }
+.dcard-btn.is-selected .dcard__frame { outline: 2px solid var(--moth-paper); outline-offset: 3px; }
+.dcard-btn.is-new .dcard__frame { outline: 2px solid var(--glow); outline-offset: 3px; animation: newpulse 2.2s ease-out 2; }
+@keyframes newpulse { 0% { box-shadow: 0 0 0 0 rgba(201, 232, 107, .5), var(--shadow-card); } 100% { box-shadow: 0 0 0 18px rgba(201, 232, 107, 0), var(--shadow-card); } }
+
+/* =================== Card back =================== */
+.dcard--back .dcard__frame { background: var(--moss-night); box-shadow: inset 0 0 0 1px var(--fern-strong), var(--shadow-card); }
+.dcard--back .dcard__inner { box-shadow: inset 0 0 0 1px rgba(169, 179, 167, .18); }
+.dcard--back svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dcard--back .emblem-core { transform-origin: center; transform-box: fill-box; animation: breathe 3.6s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { opacity: .55; transform: scale(.92); } 50% { opacity: 1; transform: scale(1.08); } }
+
+/* =================== Flip =================== */
+.flip { position: relative; perspective: 1400px; }
+.flip__inner { position: relative; width: 100%; aspect-ratio: 300 / 452; transform-style: preserve-3d; transition: transform var(--dur-flip) cubic-bezier(.3, .7, .15, 1); }
+.flip.is-flipped .flip__inner { transform: rotateY(180deg); }
+.flip__face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.flip__face--front { transform: rotateY(180deg); }
