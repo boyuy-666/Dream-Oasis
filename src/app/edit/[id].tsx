@@ -1,10 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useNavigation, usePreventRemove, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { useLocalSearchParams, usePreventRemove, useRouter } from 'expo-router';
+import React, { useMemo, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppText, Button, Chip, Icon, TextField } from '@/components/ui';
+import { AppText, Button, Chip, Icon, TextField, UnsavedChangesDialog } from '@/components/ui';
 import { MIN_DREAM_LENGTH, SUGGESTED_TAGS } from '@/data/dreamForm';
 import { MOODS } from '@/data/moods';
 import { Dream, DreamEdit, Mood } from '@/data/types';
@@ -76,7 +76,6 @@ export default function EditDreamScreen() {
 
 function EditForm({ dream }: { dream: Dream }) {
   const router = useRouter();
-  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { dreams, updateDream } = useDreams();
   const no = useMemo(() => toDreamViews(dreams).find((v) => v.id === dream.id)?.no ?? 0, [dreams, dream.id]);
@@ -89,8 +88,12 @@ function EditForm({ dream }: { dream: Dream }) {
   const [textError, setTextError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'idle' | 'saving' | 'saved'>('idle');
+  /** Set once the user chose to leave: turns the guard off before navigation continues. */
+  const [exitReason, setExitReason] = useState<'saved' | 'discarded' | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const savingRef = useRef(false);
-  const alertOpenRef = useRef(false);
+  /** Continues the navigation that was blocked when the dialog opened (null if none pending). */
+  const pendingExitRef = useRef<(() => void) | null>(null);
 
   const dirty = snapshot(form) !== snapshot(initial);
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
@@ -118,30 +121,39 @@ function EditForm({ dream }: { dream: Dream }) {
     }
   };
 
-  // Guard every exit (Cancel, Android back, gestures, programmatic back) while edits are unsaved.
-  usePreventRemove(dirty && phase !== 'saved', ({ data }) => {
-    if (savingRef.current || alertOpenRef.current) return;
-    alertOpenRef.current = true;
-    const done = () => { alertOpenRef.current = false; };
-    Alert.alert(
-      'Unsaved changes',
-      'You have changed this dream. Save your edits before leaving?',
-      [
-        { text: 'Keep Editing', style: 'cancel', onPress: done },
-        { text: 'Discard Changes', style: 'destructive', onPress: () => { done(); navigation.dispatch(data.action); } },
-        // On success the after-save effect below returns to the card (single navigation, no loop).
-        { text: 'Save Changes', onPress: () => { done(); save().catch(() => {}); } },
-      ],
-      { cancelable: true, onDismiss: done },
-    );
+  // Guard every exit (Cancel, Android back, programmatic back) while edits are unsaved.
+  // The guard turns off as soon as an exit is chosen, so the continued navigation is never re-intercepted.
+  const disablePrevention = usePreventRemove(dirty && exitReason === null, ({ repeat }) => {
+    if (savingRef.current || dialogOpen) return; // one dialog at a time
+    pendingExitRef.current = repeat;
+    setDialogOpen(true);
   });
 
-  // After a successful save (button or dialog), return to the card once the guard is lifted.
-  useEffect(() => {
-    if (phase !== 'saved') return;
+  /** Leaves Edit Dream once: continues the blocked action, or goes back to the card. */
+  const leave = (reason: 'saved' | 'discarded') => {
+    setExitReason(reason);
+    setDialogOpen(false);
+    const pending = pendingExitRef.current;
+    pendingExitRef.current = null;
+    if (pending) {
+      pending(); // `repeat` disables prevention synchronously, then re-dispatches the original action
+      return;
+    }
+    disablePrevention();
     if (router.canGoBack()) router.back();
     else router.replace(`/card/${dream.id}`);
-  }, [phase, router, dream.id]);
+  };
+
+  const onSavePress = async () => {
+    if (await save()) leave('saved');
+  };
+  const onDialogSave = async () => {
+    if (await save()) leave('saved');
+    else { setDialogOpen(false); pendingExitRef.current = null; } // show the error on the form; edits stay
+  };
+  const onKeepEditing = () => { setDialogOpen(false); pendingExitRef.current = null; };
+  // Discard never touches storage: the stored dream is left exactly as it was.
+  const onDiscard = () => leave('discarded');
 
   const addPerson = () => {
     const v = personDraft.trim().replace(/,$/, '');
@@ -283,7 +295,7 @@ function EditForm({ dream }: { dream: Dream }) {
           <Button
             label={phase === 'saved' ? 'Changes saved' : 'Save Changes'}
             icon={phase === 'saved' ? 'check' : undefined}
-            onPress={() => { save().catch(() => {}); }}
+            onPress={() => { onSavePress().catch(() => {}); }}
             disabled={!dirty && phase === 'idle'}
             loading={phase === 'saving'}
             loadingLabel="Saving changes…"
@@ -294,6 +306,13 @@ function EditForm({ dream }: { dream: Dream }) {
           </AppText>
         </View>
       </KeyboardAvoidingView>
+      <UnsavedChangesDialog
+        visible={dialogOpen}
+        saving={phase === 'saving'}
+        onSave={() => { onDialogSave().catch(() => {}); }}
+        onKeepEditing={onKeepEditing}
+        onDiscard={onDiscard}
+      />
     </View>
   );
 }
