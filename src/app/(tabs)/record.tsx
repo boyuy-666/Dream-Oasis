@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { AccessibilityInfo, KeyboardAvoidingView, Platform, Pressable, ScrollView, ScrollViewInstance, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Button, Chip, DreamDatePicker, Icon, MoodSelector, Segmented, TextField } from '@/components/ui';
@@ -30,8 +30,12 @@ export default function RecordScreen() {
   const [mode, setMode] = useState<Mode>(params.mode === 'detailed' ? 'detailed' : 'quick');
   const [text, setText] = useState('');
   const [title, setTitle] = useState('');
-  // Ordered emotions shared by Quick and Detailed; the first is the primary.
+  // Ordered emotions shared by Quick and Detailed; the first is the primary. Starts empty:
+  // the user chooses at least one before saving.
   const [moods, setMoods] = useState<Mood[]>(() => [...DEFAULT_MOODS]);
+  const [moodError, setMoodError] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const moodY = useRef(0);
   const [people, setPeople] = useState<string[]>([]);
   const [personDraft, setPersonDraft] = useState('');
   const [place, setPlace] = useState('');
@@ -46,7 +50,7 @@ export default function RecordScreen() {
   const [dreamDate, setDreamDate] = useState<DateKey>(() => yesterdayKey());
   const [dateTouched, setDateTouched] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const pristine = !text && !title && !dateTouched;
+  const pristine = !text && !title && !dateTouched && moods.length === 0;
 
   // Honour "or write a detailed entry" links each time the tab is focused with a mode param.
   useFocusEffect(useCallback(() => {
@@ -60,7 +64,7 @@ export default function RecordScreen() {
 
   const reset = () => {
     setText(''); setTitle(''); setMoods([...DEFAULT_MOODS]); setPeople([]); setPersonDraft(''); setPlace('');
-    setTags([]); setTagDraft(''); setVividness(3); setLucid(false); setError(null); setPhase('idle');
+    setTags([]); setTagDraft(''); setVividness(3); setLucid(false); setError(null); setMoodError(null); setPhase('idle');
     setDreamDate(yesterdayKey()); setDateTouched(false); setPickerOpen(false);
   };
 
@@ -81,10 +85,16 @@ export default function RecordScreen() {
 
   const save = () => {
     if (phase !== 'idle') return;
-    if (text.trim().length < MIN_LENGTH) {
-      setError('Write a few words so your card has something to grow from.');
-      return;
+    // Both checks run so every problem is shown at once; nothing is created unless both pass.
+    const textOk = text.trim().length >= MIN_LENGTH;
+    if (!textOk) setError('Write a few words so your card has something to grow from.');
+    const moodProblem = moodSelectionError(moods);
+    if (moodProblem) {
+      setMoodError(moodProblem);
+      AccessibilityInfo.announceForAccessibility(moodProblem);
+      if (textOk) scrollRef.current?.scrollTo({ y: Math.max(0, moodY.current - spacing.lg), animated: true });
     }
+    if (!textOk || moodProblem) return;
     const details: DreamDetails | undefined = mode === 'detailed' ? {
       ...(people.length ? { people } : {}),
       ...(place.trim() ? { place: place.trim() } : {}),
@@ -92,8 +102,6 @@ export default function RecordScreen() {
       vividness,
       lucid,
     } : undefined;
-    const moodError = moodSelectionError(moods);
-    if (moodError) { setError(moodError); return; }
     const chosenDate = dreamDate; // captured now; the save completes after a short animation
     const chosenMoods = [...moods];
     setPhase('saving');
@@ -104,8 +112,9 @@ export default function RecordScreen() {
         try {
           dream = addDream(text, chosenMoods, { title, details, dreamDate: chosenDate });
         } catch (e) {
+          // The store refused the selection: nothing was created; keep the form as it is.
           setPhase('idle');
-          setError(e instanceof Error ? e.message : 'This dream could not be saved.');
+          setMoodError(e instanceof Error ? e.message : 'This dream could not be saved.');
           return;
         }
         reset();
@@ -136,12 +145,21 @@ export default function RecordScreen() {
       }
     />
   );
-  const moodChips = <MoodSelector value={moods} onChange={setMoods} />;
+  const moodChips = (
+    <View onLayout={(e) => { moodY.current = e.nativeEvent.layout.y; }}>
+      <MoodSelector
+        value={moods}
+        onChange={(next) => { setMoods(next); if (next.length) setMoodError(null); }}
+        error={moodError}
+      />
+    </View>
+  );
 
   return (
     <View style={styles.root}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"

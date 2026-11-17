@@ -49,7 +49,9 @@ export function motifFor(d: Dream): Motif {
 }
 
 export function toDreamView(d: Dream, no: number): DreamView {
-  const emotions = effectiveMoods(d).map(moodLabel);
+  const known = effectiveMoods(d);
+  // Unreadable emotion data still shows its own stored value (or "Unknown"), never another mood.
+  const emotions = known.length ? known.map(moodLabel) : [moodLabel(typeof d.mood === 'string' ? d.mood : '')];
   return {
     id: d.id,
     no,

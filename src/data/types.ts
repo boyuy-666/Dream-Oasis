@@ -1,7 +1,8 @@
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 export type Mood =
   | 'peaceful' | 'joyful' | 'curious' | 'anxious' | 'eerie'
-  | 'sad' | 'excited' | 'confused' | 'angry' | 'nostalgic' | 'scared' | 'relieved' | 'lonely';
+  | 'sad' | 'excited' | 'confused' | 'angry' | 'nostalgic' | 'scared' | 'relieved' | 'lonely'
+  | 'helpless' | 'embarrassed' | 'loved' | 'overwhelmed' | 'guilty';
 
 export interface DreamCard {
   title: string;

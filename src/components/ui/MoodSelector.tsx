@@ -11,18 +11,21 @@ import { Chip } from './Chip';
 import { Icon } from './Icon';
 
 interface Props {
-  /** Ordered selection (1–3); the first is the primary feeling. */
+  /** Ordered form selection (0–3); the first is the primary feeling. Empty until the user chooses. */
   value: Mood[];
   onChange: (next: Mood[]) => void;
   label?: string;
+  /** Validation message from a save attempt (e.g. no feeling chosen), shown under the chips. */
+  error?: string | null;
 }
 
 /**
- * Multi-select emotion picker (1–3). Selection order is kept; the first is the primary.
- * The five core feelings are always shown; eight more expand inline under "+ More".
+ * Multi-select emotion picker (up to 3). Selection order is kept; the first is the primary.
+ * The form may be empty while choosing; saving requires 1–3 (checked by the screen and store).
+ * Five familiar feelings are always shown; thirteen more expand inline under "+ More".
  * A summary line always shows the full selection, including feelings hidden by a collapsed More.
  */
-export function MoodSelector({ value, onChange, label = 'How did it feel?' }: Props) {
+export function MoodSelector({ value, onChange, label = 'How did it feel?', error }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -38,7 +41,6 @@ export function MoodSelector({ value, onChange, label = 'How did it feel?' }: Pr
   const press = (mood: Mood) => {
     const { moods, outcome } = toggleMood(value, mood);
     if (outcome === 'limit') return flash(`Up to ${MAX_MOODS} feelings. Remove one to choose another.`);
-    if (outcome === 'last') return flash('Keep at least one feeling.');
     setNotice(null);
     onChange(moods);
   };
@@ -58,14 +60,20 @@ export function MoodSelector({ value, onChange, label = 'How did it feel?' }: Pr
         <AppText variant="caption" color={colors.textMuted}>Select up to {MAX_MOODS}</AppText>
       </View>
 
-      <View style={styles.summary} accessible accessibilityLiveRegion="polite"
-        accessibilityLabel={`Selected feelings: ${value.map((m, i) => `${moodLabel(m)}${i === 0 ? ' (primary)' : ''}`).join(', ')}`}>
-        <AppText variant="caption" color={colors.textMuted}>Primary</AppText>
-        <AppText variant="caption" color={colors.text} style={styles.primary}>{moodLabel(value[0])}</AppText>
-        {value.slice(1).map((m) => (
-          <AppText key={m} variant="caption" color={colors.textSecondary}>· {moodLabel(m)}</AppText>
-        ))}
-      </View>
+      {value.length ? (
+        <View style={styles.summary} accessible accessibilityLiveRegion="polite"
+          accessibilityLabel={`Selected feelings: ${value.map((m, i) => `${moodLabel(m)}${i === 0 ? ' (primary)' : ''}`).join(', ')}`}>
+          <AppText variant="caption" color={colors.textMuted}>Primary</AppText>
+          <AppText variant="caption" color={colors.text} style={styles.primary}>{moodLabel(value[0])}</AppText>
+          {value.slice(1).map((m) => (
+            <AppText key={m} variant="caption" color={colors.textSecondary}>· {moodLabel(m)}</AppText>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.summary} accessible accessibilityLiveRegion="polite" accessibilityLabel="Selected feelings: none yet">
+          <AppText variant="caption" color={colors.textMuted}>No feelings selected yet</AppText>
+        </View>
+      )}
 
       <View style={styles.chips}>
         {PRIMARY_MOODS.map(chip)}
@@ -84,6 +92,12 @@ export function MoodSelector({ value, onChange, label = 'How did it feel?' }: Pr
         </Pressable>
       </View>
 
+      {error ? (
+        <View style={styles.errorRow} accessibilityRole="alert" accessibilityLiveRegion="polite">
+          <Icon name="alert" size={16} color={colors.danger} />
+          <AppText variant="caption" color={colors.danger} style={{ flex: 1 }}>{error}</AppText>
+        </View>
+      ) : null}
       {notice ? (
         <AppText variant="caption" color={colors.textSecondary} accessibilityLiveRegion="polite">{notice}</AppText>
       ) : null}
@@ -97,5 +111,6 @@ const styles = StyleSheet.create({
   summary: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6, rowGap: 2 },
   primary: { fontFamily: fonts.bodySemibold },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  errorRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   more: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.borderStrong },
 });

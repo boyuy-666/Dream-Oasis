@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, usePreventRemove, useRouter } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { AccessibilityInfo, KeyboardAvoidingView, Platform, Pressable, ScrollView, ScrollViewInstance, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText, Button, Chip, DreamDatePicker, Icon, MoodSelector, TextField, UnsavedChangesDialog } from '@/components/ui';
@@ -115,6 +115,10 @@ function EditForm({ dream }: { dream: Dream }) {
   const [tagDraft, setTagDraft] = useState('');
   const [textError, setTextError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Feelings may be cleared while editing, but a save needs 1–3; this message sits under the selector.
+  const [moodError, setMoodError] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  const moodY = useRef(0);
   const [phase, setPhase] = useState<'idle' | 'saving' | 'saved'>('idle');
   /** Set once the user chose to leave: turns the guard off before navigation continues. */
   const [exitReason, setExitReason] = useState<'saved' | 'discarded' | null>(null);
@@ -139,12 +143,16 @@ function EditForm({ dream }: { dream: Dream }) {
       setPersonDraft('');
       setTagDraft('');
     }
-    if (final.text.trim().length < MIN_DREAM_LENGTH) {
-      setTextError('Write a few words so your card has something to grow from.');
-      return false;
+    // Both checks run so every problem is shown; the stored dream is untouched unless both pass.
+    const textOk = final.text.trim().length >= MIN_DREAM_LENGTH;
+    if (!textOk) setTextError('Write a few words so your card has something to grow from.');
+    const moodProblem = moodSelectionError(final.moods);
+    if (moodProblem) {
+      setMoodError(moodProblem);
+      AccessibilityInfo.announceForAccessibility(moodProblem);
+      if (textOk) scrollRef.current?.scrollTo({ y: Math.max(0, moodY.current - spacing.lg), animated: true });
     }
-    const moodError = moodSelectionError(final.moods);
-    if (moodError) { setSaveError(moodError); return false; }
+    if (!textOk || moodProblem) return false;
     savingRef.current = true;
     setPhase('saving');
     setSaveError(null);
@@ -219,6 +227,7 @@ function EditForm({ dream }: { dream: Dream }) {
     <View style={styles.root}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -303,7 +312,13 @@ function EditForm({ dream }: { dream: Dream }) {
 
           <TextField label="Place" icon="pin" value={form.place} onChangeText={(v) => set('place', v)} placeholder="Where did it happen?" returnKeyType="done" />
 
-          <MoodSelector value={form.moods} onChange={(m) => set('moods', m)} />
+          <View onLayout={(e) => { moodY.current = e.nativeEvent.layout.y; }}>
+            <MoodSelector
+              value={form.moods}
+              onChange={(m) => { set('moods', m); if (m.length) setMoodError(null); }}
+              error={moodError}
+            />
+          </View>
 
           <View style={styles.field}>
             <AppText variant="label" color={colors.textSecondary}>Symbols & tags</AppText>
