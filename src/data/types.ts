@@ -46,13 +46,24 @@ export interface Dream {
    * the card's illustration. Absent on unedited records (motif is then derived as before).
    */
   motif?: string;
+  /**
+   * Id of the Record draft this dream was created from. Lets a retried or interrupted save find
+   * the dream it already committed instead of creating a duplicate. Absent on older records.
+   */
+  draftId?: string;
 }
 
-export interface NewDreamExtras {
+/** Everything needed to create a new dream. Validated by the store before anything is written. */
+export interface NewDreamInput {
+  text: string;
+  /** Ordered emotions (1–3, unique); the first is the primary. */
+  moods: Mood[];
   title?: string;
   details?: DreamDetails;
-  /** `YYYY-MM-DD`; defaults to the local day of creation when absent/invalid. */
+  /** `YYYY-MM-DD`, not in the future; defaults to the local day of creation when absent. */
   dreamDate?: string;
+  /** Stable id of the draft being saved; makes creation idempotent for that draft. */
+  draftId?: string;
 }
 
 /**

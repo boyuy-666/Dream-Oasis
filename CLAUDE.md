@@ -34,8 +34,11 @@ src/components/card/  DreamCard (size-aware, rarity treatments), CardBack, CardF
 src/components/navigation/TabBar.tsx  custom tab bar (hidden on Record)
 src/theme/            colors, typography, spacing tokens
 src/data/             types, moods, sample dreams
-src/store/            DreamsContext (AsyncStorage key `dream-oasis:dreams:v1` — never change)
-src/utils/            generateCard (rarity/content logic), dreamView (derived card view model), stats, dates
+src/store/            DreamsContext (AsyncStorage key `dream-oasis:dreams:v1` — never change; ordered
+                      read-modify-write queue; addDream resolves only after storage accepts the record)
+                      useDreamDraft (Record auto-save/recovery; key `dream-oasis:new-dream-draft:v1`)
+src/utils/            generateCard (rarity/content logic), dreamCreate (validated, draftId-idempotent creation),
+                      dreamDraft + draftStore (draft schema, parsing, ordered draft writes), dreamView, stats, dates
 Dream-Oasis-UI-Prototype/  (only on branch prototype/night-garden-ui) approved HTML reference
 ```
 Import with the `@/` alias (maps to `src/`).
@@ -44,6 +47,7 @@ Import with the `@/` alias (maps to `src/`).
 - Stored dreams are never rewritten. Card display fields (motif, card number, element/emotion labels) are derived in `utils/dreamView.ts`.
 - New optional fields (`title`, `details`) are additive; keep older records valid.
 - `generateCard` owns rarity and generated content — UI work must not change it.
+- An unfinished new dream is a local draft only (never a Dream, card or rarity roll). A saved dream keeps its `draftId`, so a retried or interrupted save never duplicates or re-rolls.
 - Rarity is rolled once with `Math.random()` when a dream is created (common 50% · rare 32% · epic 14% · legendary 4%, `RARITY_ODDS`) and stored in `card.rarity`. Never re-roll or recompute rarity for an existing dream.
 
 ## Design system — Night Garden (approved)
